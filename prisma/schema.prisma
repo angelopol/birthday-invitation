@@ -28,6 +28,7 @@ model BirthdayPeople {
 
   guests        Guest[]
   galleryItems  PartysGallery[]
+  partyTracks   PartyTrack[]
 }
 
 model Guest {
@@ -55,4 +56,23 @@ model PartysGallery {
 
   @@index([birthdayUsername])
   @@index([guestToken])
+}
+
+model PartyTrack {
+  id               Int      @id @default(autoincrement())
+  birthdayUsername String   @db.VarChar(191)
+  guestToken       String?  @db.VarChar(191)
+  spotifyTrackId   String   @db.VarChar(100)
+  title            String   @db.VarChar(255)
+  artist           String   @db.VarChar(255)
+  album            String?  @db.VarChar(255)
+  coverUrl         String?  @db.VarChar(512)
+  previewUrl       String?  @db.VarChar(512)
+  createdAt        DateTime @default(now())
+
+  birthdayPerson   BirthdayPeople @relation(fields: [birthdayUsername], references: [username])
+
+  @@index([birthdayUsername])
+  @@index([guestToken])
+  @@unique([birthdayUsername, spotifyTrackId])
 }

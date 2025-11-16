@@ -1,5 +1,6 @@
 import ConfirmButton from './ConfirmButton';
 import GalleryClient from './GalleryClient';
+import PlaylistClient from './PlaylistClient';
 import { notFound } from 'next/navigation';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
@@ -157,6 +158,11 @@ export default async function InvitationPage({ params, searchParams }: Invitatio
         <GalleryClient
           initialItems={gallery}
           token={token}
+        />
+
+        <PlaylistClient
+          username={effectiveUsername}
+          invitation={token}
         />
         </div>
       </div>
