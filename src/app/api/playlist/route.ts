@@ -16,10 +16,30 @@ export async function GET(req: NextRequest) {
 
   const tracks = await prisma.partyTrack.findMany({
     where: { birthdayUsername: username },
-    orderBy: { createdAt: "asc" },
+    include: {
+      guest: {
+        select: {
+          nickname: true,
+          name: true,
+          avatarUrl: true,
+        },
+      },
+      votes: true,
+    },
   });
 
-  return NextResponse.json({ tracks });
+  // Ordenar por número de votos (desc) y luego por fecha de creación (asc)
+  const sorted = tracks
+    .map((t) => ({
+      ...t,
+      votesCount: t.votes.length,
+    }))
+    .sort((a, b) => {
+      if (b.votesCount !== a.votesCount) return b.votesCount - a.votesCount;
+      return a.createdAt.getTime() - b.createdAt.getTime();
+    });
+
+  return NextResponse.json({ tracks: sorted });
 }
 
 export async function POST(req: NextRequest) {
@@ -50,7 +70,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { spotifyTrackId, title, artist, album, coverUrl, previewUrl } = body ?? {};
+  const { spotifyTrackId, title, artist, album, coverUrl, previewUrl, comment } = body ?? {};
 
   if (!spotifyTrackId || !title || !artist) {
     return NextResponse.json({ error: "Datos de canción incompletos" }, { status: 400 });
@@ -89,6 +109,7 @@ export async function POST(req: NextRequest) {
       album,
       coverUrl,
       previewUrl,
+      comment,
     },
   });
 

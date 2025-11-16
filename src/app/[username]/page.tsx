@@ -7,6 +7,10 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { prisma } from '@/lib/prisma';
 import { getPublicUrl } from '@/lib/s3';
 
+export const metadata = {
+  title: 'Invitación de cumpleaños — BirthdayInvitation',
+};
+
 interface InvitationPageProps {
   params: Promise<{ username?: string }>;
   searchParams: Promise<{ invitation?: string }>;
@@ -49,9 +53,18 @@ export default async function InvitationPage({ params, searchParams }: Invitatio
   const secondaryColor = birthdayPerson.secondaryColor || '#6366f1';
   const cardBackground = birthdayPerson.backgroundColor || '#020617';
 
+  let guestName: string | null = null;
+  if (token) {
+    const guest = await prisma.guest.findUnique({ where: { token } });
+    guestName = guest?.name ?? null;
+  }
+
   const galleryRaw = await prisma.partysGallery.findMany({
     where: { birthdayUsername: effectiveUsername },
     orderBy: { createdAt: 'desc' },
+    include: {
+      guest: true,
+    },
   });
 
   const gallery = galleryRaw.map(item => ({
@@ -60,6 +73,7 @@ export default async function InvitationPage({ params, searchParams }: Invitatio
     fileType: item.fileType,
     s3Key: item.s3Key,
     publicUrl: `/api/gallery/file/${item.id}`,
+    guestName: item.guest?.nickname || item.guest?.name || null,
   }));
 
   return (
@@ -74,20 +88,22 @@ export default async function InvitationPage({ params, searchParams }: Invitatio
     >
       <div className="flex-1 flex items-center justify-center px-4 py-10">
         <div
-          className="w-full max-w-2xl rounded-3xl border shadow-2xl p-6 sm:p-10 space-y-6"
+          className="w-full max-w-2xl rounded-3xl border shadow-[0_24px_70px_rgba(15,23,42,0.95)] p-6 sm:p-10 space-y-8"
           style={{
             borderColor: secondaryColor,
             backgroundColor: cardBackground,
             boxShadow: `0 25px 50px -12px ${secondaryColor}66`,
           }}
         >
-        <div className="space-y-2 text-center">
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Estás invitad@s</p>
-          <h1 className="text-3xl sm:text-4xl font-bold">
-            Cumple de <span style={{ color: primaryColor }}>{effectiveUsername}</span>
+        <div className="space-y-3 text-center">
+          <p className="text-[11px] uppercase tracking-[0.25em] text-slate-400">
+            {guestName ? `${guestName}, estás invitad@` : 'Estás invitad@s'}
+          </p>
+          <h1 className="text-3xl sm:text-4xl font-semibold">
+            Celebración de <span style={{ color: primaryColor }}>{effectiveUsername}</span>
           </h1>
-          <p className="text-sm text-slate-400">
-            Guarda la fecha, revisa el dress code y confirma tu asistencia.
+          <p className="text-sm text-slate-400 max-w-md mx-auto">
+            Guarda la fecha, revisa los detalles y confirma tu asistencia para que podamos contar contigo.
           </p>
         </div>
 
@@ -148,10 +164,13 @@ export default async function InvitationPage({ params, searchParams }: Invitatio
         )}
 
         {token && (
-          <div className="pt-2 border-t border-slate-800 mt-2 space-y-4">
+          <div className="pt-4 border-t border-slate-800 mt-4 space-y-4">
             <div className="flex justify-center">
               <ConfirmButton token={token} primaryColor={primaryColor} />
             </div>
+            <p className="text-[11px] text-slate-500 text-center max-w-sm mx-auto">
+              Este enlace es solo para ti. Si cambias de opinión más adelante, puedes volver aquí y actualizar tu respuesta.
+            </p>
           </div>
         )}
 

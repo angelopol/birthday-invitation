@@ -43,8 +43,15 @@ model Guest {
   name             String  @db.VarChar(255)
   confirmated      Boolean @default(false)
 
+  // Personalización opcional del invitado
+  nickname         String? @db.VarChar(255)
+  avatarUrl        String? @db.VarChar(512)
+
   birthdayUsername String  @db.VarChar(191)
   birthdayPerson   BirthdayPeople @relation(fields: [birthdayUsername], references: [username])
+  galleryItems     PartysGallery[]
+  partyTracks      PartyTrack[]
+  trackVotes       PartyTrackVote[]
 
   @@index([birthdayUsername])
 }
@@ -60,6 +67,7 @@ model PartysGallery {
   guestToken       String   @db.VarChar(191)
 
   birthdayPerson   BirthdayPeople @relation(fields: [birthdayUsername], references: [username])
+  guest            Guest          @relation(fields: [guestToken], references: [token])
 
   @@index([birthdayUsername])
   @@index([guestToken])
@@ -75,11 +83,27 @@ model PartyTrack {
   album            String?  @db.VarChar(255)
   coverUrl         String?  @db.VarChar(512)
   previewUrl       String?  @db.VarChar(512)
+  comment          String?  @db.VarChar(280)
   createdAt        DateTime @default(now())
 
   birthdayPerson   BirthdayPeople @relation(fields: [birthdayUsername], references: [username])
+  guest            Guest?         @relation(fields: [guestToken], references: [token])
+  votes            PartyTrackVote[]
 
   @@index([birthdayUsername])
   @@index([guestToken])
   @@unique([birthdayUsername, spotifyTrackId])
+}
+
+model PartyTrackVote {
+  id         Int      @id @default(autoincrement())
+  trackId    Int
+  guestToken String   @db.VarChar(191)
+  createdAt  DateTime @default(now())
+
+  track      PartyTrack @relation(fields: [trackId], references: [id])
+  guest      Guest      @relation(fields: [guestToken], references: [token])
+
+  @@unique([trackId, guestToken])
+  @@index([guestToken])
 }

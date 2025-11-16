@@ -4,6 +4,10 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 import PlaylistClientDashboard from "./PlaylistClientDashboard";
 
+export const metadata = {
+  title: "Playlist de la fiesta — BirthdayInvitation",
+};
+
 export default async function PlaylistDashboardPage() {
   const session = await getServerSession(authOptions);
 

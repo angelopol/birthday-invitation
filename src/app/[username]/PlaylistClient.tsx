@@ -17,6 +17,13 @@ interface ApiTrack {
   album?: string | null;
   coverUrl?: string | null;
   previewUrl?: string | null;
+   comment?: string | null;
+   votesCount?: number;
+   guest?: {
+     nickname?: string | null;
+     name: string;
+     avatarUrl?: string | null;
+   } | null;
 }
 
 interface SpotifyTrackResult {
@@ -26,6 +33,7 @@ interface SpotifyTrackResult {
   album?: string;
   coverUrl?: string;
   previewUrl?: string;
+  comment?: string;
 }
 
 export default function PlaylistClient({ username, invitation, spotifyPlaylistId }: PlaylistClientProps) {
@@ -34,6 +42,8 @@ export default function PlaylistClient({ username, invitation, spotifyPlaylistId
   const [searchResults, setSearchResults] = useState<SpotifyTrackResult[]>([]);
   const [loadingSearch, setLoadingSearch] = useState(false);
   const [addingId, setAddingId] = useState<string | null>(null);
+  const [commentByTrack, setCommentByTrack] = useState<Record<string, string>>({});
+  const [likedIds, setLikedIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     const fetchTracks = async () => {
@@ -83,7 +93,10 @@ export default function PlaylistClient({ username, invitation, spotifyPlaylistId
       const res = await fetch(`/api/playlist?invitation=${encodeURIComponent(invitation)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(track),
+        body: JSON.stringify({
+          ...track,
+          comment: commentByTrack[track.spotifyTrackId]?.trim() || undefined,
+        }),
       });
 
       const data = await res.json();
@@ -100,6 +113,11 @@ export default function PlaylistClient({ username, invitation, spotifyPlaylistId
       toast.error("Error al agregar la canción");
     } finally {
       setAddingId(null);
+      setCommentByTrack((prev) => {
+        const copy = { ...prev };
+        delete copy[track.spotifyTrackId];
+        return copy;
+      });
     }
   };
 
@@ -131,11 +149,83 @@ export default function PlaylistClient({ username, invitation, spotifyPlaylistId
     }
   };
 
+  const toggleLike = async (track: ApiTrack) => {
+    if (!invitation) {
+      toast.error("Usa tu enlace personal de invitado para votar canciones.");
+      return;
+    }
+
+    const isLiked = likedIds.has(track.id);
+    try {
+      const res = await fetch(`/api/playlist/vote?invitation=${encodeURIComponent(invitation)}` ,{
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ trackId: track.id, like: !isLiked }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error ?? "No se pudo registrar el voto");
+        return;
+      }
+
+      setTracks((prev) =>
+        prev.map((t) =>
+          t.id === track.id ? { ...t, votesCount: data.votesCount } : t
+        )
+      );
+
+      setLikedIds((prev) => {
+        const next = new Set(prev);
+        if (isLiked) {
+          next.delete(track.id);
+        } else {
+          next.add(track.id);
+        }
+        return next;
+      });
+    } catch (error) {
+      console.error(error);
+      toast.error("Error al votar la canción");
+    }
+  };
+
   return (
     <section className="mt-6 space-y-4">
+      {tracks.length > 0 && (
+        <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-3 space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-semibold text-slate-200">Lo que se viene</p>
+            <p className="text-[10px] text-slate-500">Top canciones más votadas</p>
+          </div>
+          <ol className="space-y-1 text-[11px] text-slate-200">
+            {tracks.slice(0, 5).map((track, index) => (
+              <li key={track.id} className="flex items-center gap-2">
+                <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-slate-800 text-[9px] text-slate-300">
+                  {index + 1}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="truncate">
+                    {track.title} <span className="text-slate-400">· {track.artist}</span>
+                  </p>
+                </div>
+                <span className="text-[10px] text-slate-500 whitespace-nowrap">
+                  {(track.votesCount ?? 0)} ❤
+                </span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-lg font-semibold text-slate-100">Playlist de la fiesta</h2>
-        <div className="flex items-center gap-3">
+        <div className="space-y-0.5">
+          <h2 className="text-lg font-semibold text-slate-100">Playlist de la fiesta</h2>
+          <p className="text-[11px] text-slate-400">
+            Busca canciones en Spotify y proponlas para que suenen en la fiesta.
+          </p>
+        </div>
+        <div className="flex flex-col items-end gap-1">
           <p className="text-[11px] text-slate-500">
             Cada invitad@ puede proponer hasta 3 canciones.
           </p>
@@ -146,7 +236,7 @@ export default function PlaylistClient({ username, invitation, spotifyPlaylistId
               rel="noreferrer"
               className="text-[11px] text-green-400 underline-offset-2 hover:underline"
             >
-              Ver playlist en Spotify
+              Ver en Spotify
             </a>
           )}
         </div>
@@ -191,6 +281,19 @@ export default function PlaylistClient({ username, invitation, spotifyPlaylistId
                   {track.album && (
                     <p className="text-[10px] text-slate-500 truncate">{track.album}</p>
                   )}
+                  <input
+                    type="text"
+                    value={commentByTrack[track.spotifyTrackId] ?? ""}
+                    onChange={(e) =>
+                      setCommentByTrack((prev) => ({
+                        ...prev,
+                        [track.spotifyTrackId]: e.target.value,
+                      }))
+                    }
+                    placeholder="Dedicatoria (opcional)"
+                    className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900/60 px-2 py-1 text-[10px] text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                    maxLength={280}
+                  />
                 </div>
                 <button
                   type="button"
@@ -232,6 +335,25 @@ export default function PlaylistClient({ username, invitation, spotifyPlaylistId
                   {track.album && (
                     <p className="text-[10px] text-slate-500 truncate">{track.album}</p>
                   )}
+                  {track.comment && (
+                    <p className="mt-0.5 text-[10px] text-sky-300 line-clamp-2">
+                      “{track.comment}”
+                    </p>
+                  )}
+                  {track.guest && (
+                    <div className="mt-1 flex items-center gap-1">
+                      {track.guest.avatarUrl && (
+                        <img
+                          src={track.guest.avatarUrl}
+                          alt={track.guest.nickname ?? track.guest.name}
+                          className="h-4 w-4 rounded-full object-cover"
+                        />
+                      )}
+                      <span className="text-[10px] text-slate-500 truncate">
+                        Propuesta por {track.guest.nickname ?? track.guest.name}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 {track.previewUrl && (
                   <audio
@@ -240,6 +362,24 @@ export default function PlaylistClient({ username, invitation, spotifyPlaylistId
                     src={track.previewUrl}
                   />
                 )}
+                <div className="flex flex-col items-end gap-1 ml-2">
+                  <button
+                    type="button"
+                    onClick={() => toggleLike(track)}
+                    className={`text-[11px] px-2 py-1 rounded-full border ${
+                      likedIds.has(track.id)
+                        ? "border-pink-400 text-pink-300 bg-pink-500/10"
+                        : "border-slate-600 text-slate-300 hover:border-pink-400 hover:text-pink-300"
+                    }`}
+                  >
+                    {likedIds.has(track.id) ? "♥ Me gusta" : "♡ Me gusta"}
+                  </button>
+                  <span className="text-[10px] text-slate-500">
+                    {(track.votesCount ?? 0) === 1
+                      ? "1 voto"
+                      : `${track.votesCount ?? 0} votos`}
+                  </span>
+                </div>
                 {invitation && (
                   <button
                     type="button"

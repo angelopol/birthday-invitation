@@ -3,6 +3,10 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { prisma } from '@/lib/prisma';
 
+export const metadata = {
+  title: 'Editar invitación — BirthdayInvitation',
+};
+
 async function getBirthdayPerson(username: string) {
   return prisma.birthdayPeople.findUnique({ where: { username } });
 }

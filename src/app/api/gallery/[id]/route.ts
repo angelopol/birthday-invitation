@@ -4,7 +4,10 @@ import { deleteFromS3 } from "@/lib/s3";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   const url = new URL(req.url);
   const token = url.searchParams.get("token");
 
@@ -18,10 +21,6 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
   if (!entry) {
     return NextResponse.json({ error: "Archivo no encontrado" }, { status: 404 });
   }
-  
-  // Permisos:
-  // - Invitado dueño del token puede eliminar sus propios archivos.
-  // - El cumpleañero autenticado (session.user.username === birthdayUsername) puede eliminar cualquier archivo de su galería.
 
   let isAllowed = false;
 

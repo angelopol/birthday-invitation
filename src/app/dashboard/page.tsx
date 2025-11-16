@@ -1,6 +1,11 @@
 import { redirect } from 'next/navigation';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import DashboardStatusClient from './status-client';
+
+export const metadata = {
+  title: 'Panel de tu fiesta — BirthdayInvitation',
+};
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
@@ -13,49 +18,70 @@ export default async function DashboardPage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 flex items-center justify-center px-4">
-      <div className="w-full max-w-xl rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl p-6 sm:p-8 space-y-6">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold">Dashboard</h1>
+      <div className="w-full max-w-xl rounded-2xl bg-slate-900/85 border border-slate-800 shadow-[0_24px_70px_rgba(15,23,42,0.95)] p-6 sm:p-8 space-y-6">
+        <div className="space-y-2">
+          <h1 className="text-2xl font-semibold">Panel de tu fiesta</h1>
           <p className="text-sm text-slate-100">
             Bienvenido, <span className="font-medium text-blue-400">{username}</span>
           </p>
           <p className="text-sm text-slate-400">
-            Desde aquí puedes editar tu invitación, gestionar invitados y ver tu página pública.
+            Desde aquí controlas todo lo importante: invitación, invitados, galería y playlist.
           </p>
+          <DashboardStatusClient />
         </div>
         <div className="grid gap-3 text-sm sm:grid-cols-1">
           <a
             href="/dashboard/edit-invitation"
-            className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-500 transition-colors"
+            className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-900/70 px-4 py-3 hover:bg-slate-900 transition-colors"
           >
-            Editar invitación
+            <div>
+              <p className="font-medium text-slate-100">Editar invitación</p>
+              <p className="text-xs text-slate-400">Configura fecha, lugar, dress code y texto de la tarjeta.</p>
+            </div>
+            <span className="text-lg">✏️</span>
           </a>
           <a
             href="/dashboard/guests"
-            className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-500 transition-colors"
+            className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-900/70 px-4 py-3 hover:bg-slate-900 transition-colors"
           >
-            Gestionar invitados
+            <div>
+              <p className="font-medium text-slate-100">Gestionar invitados</p>
+              <p className="text-xs text-slate-400">Crea enlaces, revisa confirmaciones y controla el aforo.</p>
+            </div>
+            <span className="text-lg">👥</span>
           </a>
           <a
             href="/dashboard/gallery"
-            className="inline-flex items-center justify-center rounded-lg bg-slate-800 px-4 py-2 font-medium text-slate-100 hover:bg-slate-700 transition-colors"
+            className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-900/70 px-4 py-3 hover:bg-slate-900 transition-colors"
           >
-            Galería
+            <div>
+              <p className="font-medium text-slate-100">Galería</p>
+              <p className="text-xs text-slate-400">Sube fotos de referencia y revisa lo que comparte la gente.</p>
+            </div>
+            <span className="text-lg">🖼️</span>
           </a>
           <a
             href="/dashboard/playlist"
-            className="inline-flex items-center justify-center rounded-lg bg-emerald-700 px-4 py-2 font-medium text-white hover:bg-emerald-600 transition-colors"
+            className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-900/70 px-4 py-3 hover:bg-slate-900 transition-colors"
           >
-            Playlist de la fiesta
+            <div>
+              <p className="font-medium text-slate-100">Playlist de la fiesta</p>
+              <p className="text-xs text-slate-400">Revisa propuestas, sincroniza con Spotify y mira las más votadas.</p>
+            </div>
+            <span className="text-lg">🎵</span>
           </a>
           {username && (
             <a
               href={`/${username}`}
-              className="inline-flex items-center justify-center rounded-lg border border-slate-700 px-4 py-2 font-medium text-slate-100 hover:bg-slate-800 transition-colors"
+              className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-900/70 px-4 py-3 hover:bg-slate-900 transition-colors"
               target="_blank"
               rel="noreferrer"
             >
-              Ver mi página pública
+              <div>
+                <p className="font-medium text-slate-100">Ver página pública</p>
+                <p className="text-xs text-slate-400">Abre la invitación tal y como la verá cualquier invitad@.</p>
+              </div>
+              <span className="text-lg">🔗</span>
             </a>
           )}
         </div>

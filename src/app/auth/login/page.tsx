@@ -5,6 +5,10 @@ import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
 
+export const metadata = {
+  title: 'Iniciar sesión — BirthdayInvitation',
+};
+
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();

@@ -36,6 +36,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No tienes permiso para eliminar esta canción" }, { status: 403 });
   }
 
+  // borrar primero votos asociados para no violar la FK
+  await prisma.partyTrackVote.deleteMany({ where: { trackId: id } });
   await prisma.partyTrack.delete({ where: { id } });
 
   try {
