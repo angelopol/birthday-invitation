@@ -1,5 +1,5 @@
 import ConfirmButton from './ConfirmButton';
-import UploadMedia from './UploadMedia';
+import GalleryClient from './GalleryClient';
 import { notFound } from 'next/navigation';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
@@ -7,13 +7,13 @@ import { prisma } from '@/lib/prisma';
 import { getPublicUrl } from '@/lib/s3';
 
 interface InvitationPageProps {
-  params: { username?: string };
+  params: Promise<{ username?: string }>;
   searchParams: Promise<{ invitation?: string }>;
 }
 
 export default async function InvitationPage({ params, searchParams }: InvitationPageProps) {
+  const { username: requestedUsername } = await params;
   const { invitation: token } = await searchParams;
-  const requestedUsername = params.username;
 
   const session = await getServerSession(authOptions);
   const sessionUsername = session?.user ? (session.user as any).username as string : undefined;
@@ -48,10 +48,18 @@ export default async function InvitationPage({ params, searchParams }: Invitatio
   const secondaryColor = birthdayPerson.secondaryColor || '#6366f1';
   const cardBackground = birthdayPerson.backgroundColor || '#020617';
 
-  const gallery = await prisma.partysGallery.findMany({
+  const galleryRaw = await prisma.partysGallery.findMany({
     where: { birthdayUsername: effectiveUsername },
     orderBy: { createdAt: 'desc' },
   });
+
+  const gallery = galleryRaw.map(item => ({
+    id: item.id,
+    fileName: item.fileName,
+    fileType: item.fileType,
+    s3Key: item.s3Key,
+    publicUrl: `/api/gallery/file/${item.id}`,
+  }));
 
   return (
     <main
@@ -143,38 +151,13 @@ export default async function InvitationPage({ params, searchParams }: Invitatio
             <div className="flex justify-center">
               <ConfirmButton token={token} primaryColor={primaryColor} />
             </div>
-            <UploadMedia token={token} />
           </div>
         )}
 
-        {gallery.length > 0 && (
-          <div className="pt-6 border-t border-slate-800 space-y-3">
-            <h2 className="text-sm font-semibold text-slate-200">Galería de la fiesta</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-              {gallery.map(item => {
-                const url = getPublicUrl(item.s3Key);
-                if (item.fileType === 'video') {
-                  return (
-                    <video
-                      key={item.id}
-                      src={url}
-                      className="w-full h-28 object-cover rounded-lg border border-slate-800 bg-black"
-                      controls
-                    />
-                  );
-                }
-                return (
-                  <img
-                    key={item.id}
-                    src={url}
-                    alt={item.fileName}
-                    className="w-full h-28 object-cover rounded-lg border border-slate-800"
-                  />
-                );
-              })}
-            </div>
-          </div>
-        )}
+        <GalleryClient
+          initialItems={gallery}
+          token={token}
+        />
         </div>
       </div>
     </main>

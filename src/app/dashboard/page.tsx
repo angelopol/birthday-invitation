@@ -36,6 +36,12 @@ export default async function DashboardPage() {
           >
             Gestionar invitados
           </a>
+          <a
+            href="/dashboard/gallery"
+            className="inline-flex items-center justify-center rounded-lg bg-slate-800 px-4 py-2 font-medium text-slate-100 hover:bg-slate-700 transition-colors"
+          >
+            Galería
+          </a>
           {username && (
             <a
               href={`/${username}`}

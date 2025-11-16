@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { uploadToS3 } from "@/lib/s3";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 const MAX_PER_GUEST = Number(process.env.GALLERY_MAX_PHOTOS_VIDEOS_USER || "10");
 
@@ -13,18 +15,43 @@ export async function POST(req: Request) {
   const url = new URL(req.url);
   const token = url.searchParams.get("token");
 
-  if (!token) {
-    return NextResponse.json({ error: "Token de invitado requerido" }, { status: 400 });
+  let birthdayUsername: string | null = null;
+  let uploadOwnerKey: string | null = null; // se usará como "guestToken" lógico para límite
+
+  if (token) {
+    const guest = await prisma.guest.findUnique({ where: { token } });
+
+    if (!guest) {
+      return NextResponse.json({ error: "Invitado no válido" }, { status: 401 });
+    }
+
+    birthdayUsername = guest.birthdayUsername;
+    uploadOwnerKey = token;
+  } else {
+    // Intento de subida del cumpleañero autenticado
+    const session = await getServerSession(authOptions);
+    const sessionUsername = (session?.user as any)?.username as string | undefined;
+
+    if (!sessionUsername) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
+    // Verificamos que el usuario exista como BirthdayPeople
+    const owner = await prisma.birthdayPeople.findUnique({ where: { username: sessionUsername } });
+    if (!owner) {
+      return NextResponse.json({ error: "Usuario no válido" }, { status: 401 });
+    }
+
+    birthdayUsername = owner.username;
+    uploadOwnerKey = `OWNER-${owner.username}`;
   }
 
-  const guest = await prisma.guest.findUnique({ where: { token } });
-
-  if (!guest) {
-    return NextResponse.json({ error: "Invitado no válido" }, { status: 401 });
+  if (!birthdayUsername || !uploadOwnerKey) {
+    return NextResponse.json({ error: "No se pudo determinar el dueño de la subida" }, { status: 400 });
   }
 
   const existingCount = await prisma.partysGallery.count({
-    where: { guestToken: token },
+    where: { guestToken: uploadOwnerKey },
   });
 
   if (existingCount >= MAX_PER_GUEST) {
@@ -57,9 +84,9 @@ export async function POST(req: Request) {
     const buffer = Buffer.from(await file.arrayBuffer());
     const ext = file.name.split(".").pop() || "bin";
     const randomId = Math.random().toString(36).slice(2, 10);
-    const baseName = `${guest.birthdayUsername}-${randomId}`;
+    const baseName = `${birthdayUsername}-${randomId}`;
     const fileName = `${baseName}.${ext}`;
-    const key = `${guest.birthdayUsername}/${fileName}`;
+    const key = `${birthdayUsername}/${fileName}`;
 
     await uploadToS3({
       key,
@@ -72,8 +99,8 @@ export async function POST(req: Request) {
         fileName,
         fileType: mainType,
         s3Key: key,
-        birthdayUsername: guest.birthdayUsername,
-        guestToken: token,
+        birthdayUsername,
+        guestToken: uploadOwnerKey,
       },
     });
 

@@ -5,9 +5,10 @@ import toast from "react-hot-toast";
 
 interface UploadMediaProps {
   token: string;
+  onUploaded?: (items: any[]) => void;
 }
 
-export default function UploadMedia({ token }: UploadMediaProps) {
+export default function UploadMedia({ token, onUploaded }: UploadMediaProps) {
   const [files, setFiles] = useState<FileList | null>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -38,8 +39,9 @@ export default function UploadMedia({ token }: UploadMediaProps) {
 
       toast.success("Archivos subidos correctamente");
       setFiles(null);
-      // Recargar para ver la galería actualizada
-      window.location.reload();
+      if (onUploaded) {
+        onUploaded(data.uploaded || []);
+      }
     } catch {
       toast.error("Error de red al subir archivos");
     } finally {

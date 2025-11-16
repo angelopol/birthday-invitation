@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
 interface ConfirmButtonProps {
@@ -12,7 +12,37 @@ export default function ConfirmButton({ token, primaryColor = '#3b82f6' }: Confi
   const [confirming, setConfirming] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
 
+  useEffect(() => {
+    let active = true;
+
+    async function checkStatus() {
+      if (!token) return;
+
+      try {
+        const res = await fetch(`/api/guests/${token}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (active && data.guest && data.guest.confirmated) {
+          setConfirmed(true);
+        }
+      } catch {
+        // silencioso, no es crítico
+      }
+    }
+
+    checkStatus();
+
+    return () => {
+      active = false;
+    };
+  }, [token]);
+
   async function handleConfirm() {
+    if (!token) {
+      toast.error('Enlace de invitación inválido');
+      return;
+    }
+
     setConfirming(true);
     try {
       const res = await fetch(`/api/guests/${token}/confirm`, {

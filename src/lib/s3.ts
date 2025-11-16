@@ -25,7 +25,6 @@ export async function uploadToS3(params: {
     Key: params.key,
     Body: params.body,
     ContentType: params.contentType,
-    ACL: "public-read",
   });
 
   await s3.send(command);

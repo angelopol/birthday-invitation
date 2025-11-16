@@ -21,7 +21,7 @@ export async function GET() {
     orderBy: { name: 'asc' },
   });
 
-  return NextResponse.json({ guests });
+  return NextResponse.json({ guests, username });
 }
 
 export async function POST(request: Request) {
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
 
   const invitationUrl = `/${username}?invitation=${token}`;
 
-  return NextResponse.json({ guest, invitationUrl }, { status: 201 });
+  return NextResponse.json({ guest, invitationUrl, username }, { status: 201 });
 }
 
 export async function DELETE() {

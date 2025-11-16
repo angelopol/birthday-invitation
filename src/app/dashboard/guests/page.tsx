@@ -16,6 +16,7 @@ export default function GuestsPage() {
   const [name, setName] = useState('');
   const [creating, setCreating] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [username, setUsername] = useState<string | null>(null);
 
   async function loadGuests() {
     setLoading(true);
@@ -27,6 +28,7 @@ export default function GuestsPage() {
       return;
     }
     setGuests(data.guests ?? []);
+    setUsername(data.username ?? null);
     setLoading(false);
   }
 
@@ -55,6 +57,9 @@ export default function GuestsPage() {
 
     setName('');
     setGuests(prev => [...prev, data.guest]);
+    if (data.username) {
+      setUsername(data.username);
+    }
     toast.success('Invitado creado correctamente');
   }
 
@@ -93,10 +98,29 @@ export default function GuestsPage() {
 
   async function handleCopyLink(token: string) {
     const baseUrl = window.location.origin;
-    const username = window.location.pathname.split('/')[2] || '';
     const url = `${baseUrl}/${username}?invitation=${token}`;
     await navigator.clipboard.writeText(url);
     toast.success('Enlace copiado al portapapeles');
+  }
+
+  async function handleShareLink(token: string) {
+    const baseUrl = window.location.origin;
+    const url = `${baseUrl}/${username}?invitation=${token}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Invitación a la fiesta',
+          text: 'Te comparto tu enlace de invitación:',
+          url,
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    } else {
+      await navigator.clipboard.writeText(url);
+      toast.success('Enlace copiado al portapapeles');
+    }
   }
 
   return (
@@ -157,12 +181,18 @@ export default function GuestsPage() {
                       <span className="text-yellow-400">Pendiente</span>
                     )}
                   </td>
-                  <td className="py-2">
+                  <td className="py-2 space-x-2">
                     <button
                       onClick={() => handleCopyLink(guest.token)}
-                      className="text-blue-400 hover:text-blue-300 underline"
+                      className="text-blue-400 hover:text-blue-300 underline text-xs"
                     >
                       Copiar enlace
+                    </button>
+                    <button
+                      onClick={() => handleShareLink(guest.token)}
+                      className="text-emerald-400 hover:text-emerald-300 underline text-xs"
+                    >
+                      Compartir
                     </button>
                   </td>
                 </tr>
