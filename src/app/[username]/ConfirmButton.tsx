@@ -5,9 +5,10 @@ import toast from 'react-hot-toast';
 
 interface ConfirmButtonProps {
   token: string;
+  primaryColor?: string;
 }
 
-export default function ConfirmButton({ token }: ConfirmButtonProps) {
+export default function ConfirmButton({ token, primaryColor = '#3b82f6' }: ConfirmButtonProps) {
   const [confirming, setConfirming] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
 
@@ -36,7 +37,11 @@ export default function ConfirmButton({ token }: ConfirmButtonProps) {
         <button
           onClick={handleConfirm}
           disabled={confirming}
-          className="bg-blue-600 text-white rounded px-4 py-2 text-sm font-medium hover:bg-blue-500 disabled:opacity-60"
+          className="rounded px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+          style={{
+            backgroundColor: primaryColor,
+            boxShadow: `0 10px 25px -8px ${primaryColor}88`,
+          }}
         >
           {confirming ? 'Confirmando...' : 'Confirmar asistencia'}
         </button>

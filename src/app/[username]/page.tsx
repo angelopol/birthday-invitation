@@ -1,16 +1,18 @@
 import ConfirmButton from './ConfirmButton';
+import UploadMedia from './UploadMedia';
 import { notFound } from 'next/navigation';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { prisma } from '@/lib/prisma';
+import { getPublicUrl } from '@/lib/s3';
 
 interface InvitationPageProps {
   params: { username?: string };
-  searchParams: { invitation?: string };
+  searchParams: Promise<{ invitation?: string }>;
 }
 
 export default async function InvitationPage({ params, searchParams }: InvitationPageProps) {
-  const token = searchParams.invitation;
+  const { invitation: token } = await searchParams;
   const requestedUsername = params.username;
 
   const session = await getServerSession(authOptions);
@@ -42,14 +44,38 @@ export default async function InvitationPage({ params, searchParams }: Invitatio
       })
     : null;
 
+  const primaryColor = birthdayPerson.primaryColor || '#38bdf8';
+  const secondaryColor = birthdayPerson.secondaryColor || '#6366f1';
+  const cardBackground = birthdayPerson.backgroundColor || '#020617';
+
+  const gallery = await prisma.partysGallery.findMany({
+    where: { birthdayUsername: effectiveUsername },
+    orderBy: { createdAt: 'desc' },
+  });
+
   return (
-    <main className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 flex">
+    <main
+      className="min-h-screen flex"
+      style={{
+        backgroundImage:
+          `radial-gradient(circle at top, ${primaryColor}22, transparent 55%), ` +
+          `radial-gradient(circle at bottom, ${secondaryColor}22, #020617 60%)`,
+        backgroundColor: '#020617',
+      }}
+    >
       <div className="flex-1 flex items-center justify-center px-4 py-10">
-        <div className="w-full max-w-2xl rounded-3xl border border-slate-800 bg-slate-900/80 shadow-2xl shadow-blue-900/40 p-6 sm:p-10 space-y-6">
+        <div
+          className="w-full max-w-2xl rounded-3xl border shadow-2xl p-6 sm:p-10 space-y-6"
+          style={{
+            borderColor: secondaryColor,
+            backgroundColor: cardBackground,
+            boxShadow: `0 25px 50px -12px ${secondaryColor}66`,
+          }}
+        >
         <div className="space-y-2 text-center">
           <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Estás invitad@s</p>
           <h1 className="text-3xl sm:text-4xl font-bold">
-            Cumple de <span className="text-blue-400">{effectiveUsername}</span>
+            Cumple de <span style={{ color: primaryColor }}>{effectiveUsername}</span>
           </h1>
           <p className="text-sm text-slate-400">
             Guarda la fecha, revisa el dress code y confirma tu asistencia.
@@ -113,8 +139,40 @@ export default async function InvitationPage({ params, searchParams }: Invitatio
         )}
 
         {token && (
-          <div className="pt-2 border-t border-slate-800 mt-2 flex justify-center">
-            <ConfirmButton token={token} />
+          <div className="pt-2 border-t border-slate-800 mt-2 space-y-4">
+            <div className="flex justify-center">
+              <ConfirmButton token={token} primaryColor={primaryColor} />
+            </div>
+            <UploadMedia token={token} />
+          </div>
+        )}
+
+        {gallery.length > 0 && (
+          <div className="pt-6 border-t border-slate-800 space-y-3">
+            <h2 className="text-sm font-semibold text-slate-200">Galería de la fiesta</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+              {gallery.map(item => {
+                const url = getPublicUrl(item.s3Key);
+                if (item.fileType === 'video') {
+                  return (
+                    <video
+                      key={item.id}
+                      src={url}
+                      className="w-full h-28 object-cover rounded-lg border border-slate-800 bg-black"
+                      controls
+                    />
+                  );
+                }
+                return (
+                  <img
+                    key={item.id}
+                    src={url}
+                    alt={item.fileName}
+                    className="w-full h-28 object-cover rounded-lg border border-slate-800"
+                  />
+                );
+              })}
+            </div>
           </div>
         )}
         </div>

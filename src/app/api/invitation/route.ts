@@ -19,6 +19,9 @@ export async function POST(request: Request) {
   const dressCode = (formData.get('dressCode') as string | null) ?? '';
   const extraInfoRaw = (formData.get('extraInfo') as string | null) ?? '';
   const extraInfo = extraInfoRaw.slice(0, 2000);
+  const primaryColor = (formData.get('primaryColor') as string | null) ?? null;
+  const secondaryColor = (formData.get('secondaryColor') as string | null) ?? null;
+  const backgroundColor = (formData.get('backgroundColor') as string | null) ?? null;
 
   let partyDate: Date | null = null;
   if (partyDateRaw) {
@@ -35,6 +38,9 @@ export async function POST(request: Request) {
       ubication,
       dressCode,
       extraInfo,
+      primaryColor: primaryColor || undefined,
+      secondaryColor: secondaryColor || undefined,
+      backgroundColor: backgroundColor || undefined,
     },
   });
 

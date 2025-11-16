@@ -21,7 +21,13 @@ model BirthdayPeople {
   dressCode  String?
   extraInfo  String?
 
-  guests     Guest[]
+  // Personalización de colores de la invitación
+  primaryColor   String? // color principal (botones, acentos)
+  secondaryColor String? // color secundario
+  backgroundColor String? // fondo principal de la tarjeta
+
+  guests        Guest[]
+  galleryItems  PartysGallery[]
 }
 
 model Guest {
@@ -33,4 +39,20 @@ model Guest {
   birthdayPerson   BirthdayPeople @relation(fields: [birthdayUsername], references: [username])
 
   @@index([birthdayUsername])
+}
+
+model PartysGallery {
+  id               Int      @id @default(autoincrement())
+  fileName         String   @db.VarChar(255)
+  fileType         String   @db.VarChar(50) // image|video mime category
+  s3Key            String   @db.VarChar(512)
+  createdAt        DateTime @default(now())
+
+  birthdayUsername String   @db.VarChar(191)
+  guestToken       String   @db.VarChar(191)
+
+  birthdayPerson   BirthdayPeople @relation(fields: [birthdayUsername], references: [username])
+
+  @@index([birthdayUsername])
+  @@index([guestToken])
 }

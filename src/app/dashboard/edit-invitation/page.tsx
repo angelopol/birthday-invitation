@@ -73,6 +73,36 @@ export default async function EditInvitationPage() {
             />
           </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="space-y-1">
+              <label className="block text-sm font-medium">Color primario</label>
+              <input
+                type="color"
+                name="primaryColor"
+                defaultValue={birthdayPerson.primaryColor ?? '#3b82f6'}
+                className="h-10 w-full rounded-lg border border-slate-700 bg-slate-900/60"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium">Color secundario</label>
+              <input
+                type="color"
+                name="secondaryColor"
+                defaultValue={birthdayPerson.secondaryColor ?? '#6366f1'}
+                className="h-10 w-full rounded-lg border border-slate-700 bg-slate-900/60"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium">Fondo tarjeta</label>
+              <input
+                type="color"
+                name="backgroundColor"
+                defaultValue={birthdayPerson.backgroundColor ?? '#020617'}
+                className="h-10 w-full rounded-lg border border-slate-700 bg-slate-900/60"
+              />
+            </div>
+          </div>
+
           <button
             type="submit"
             className="w-full rounded-lg bg-blue-600 py-2 text-sm font-medium text-white hover:bg-blue-500 transition-colors"

@@ -23,16 +23,6 @@ export default async function DashboardPage() {
             Desde aquí puedes editar tu invitación, gestionar invitados y ver tu página pública.
           </p>
         </div>
-
-        <form action="/api/auth/signout" method="post">
-          <button
-            type="submit"
-            className="text-xs text-red-400 underline hover:text-red-300"
-          >
-            Cerrar sesión
-          </button>
-        </form>
-
         <div className="grid gap-3 text-sm sm:grid-cols-1">
           <a
             href="/dashboard/edit-invitation"
