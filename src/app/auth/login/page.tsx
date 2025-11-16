@@ -3,6 +3,7 @@
 import { FormEvent, useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import toast from 'react-hot-toast';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -29,37 +30,42 @@ export default function LoginPage() {
 
     if (result?.error) {
       setError('Credenciales inválidas');
+      toast.error('Usuario o contraseña incorrectos');
       return;
     }
 
+    toast.success('Bienvenido de nuevo');
     router.push('/dashboard');
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="w-full max-w-md bg-white rounded-lg shadow p-6 space-y-4">
-        <h1 className="text-2xl font-semibold text-center">Iniciar sesión</h1>
+    <main className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 flex items-center justify-center px-4">
+      <div className="w-full max-w-md rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl p-6 sm:p-8 space-y-6">
+        <div className="space-y-1 text-center">
+          <h1 className="text-2xl font-semibold">Iniciar sesión</h1>
+          <p className="text-sm text-slate-400">Accede para configurar tu invitación y tus invitados.</p>
+        </div>
 
         {(error || errorParam) && (
-          <p className="text-sm text-red-600 text-center">{error || 'Error al iniciar sesión'}</p>
+          <p className="text-sm text-red-400 text-center">{error || 'Error al iniciar sesión'}</p>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Username</label>
+          <div className="space-y-1">
+            <label className="block text-sm font-medium">Username</label>
             <input
-              className="w-full border rounded px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={username}
               onChange={e => setUsername(e.target.value)}
               required
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-1">Password</label>
+          <div className="space-y-1">
+            <label className="block text-sm font-medium">Password</label>
             <input
               type="password"
-              className="w-full border rounded px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={password}
               onChange={e => setPassword(e.target.value)}
               required
@@ -69,19 +75,19 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white rounded py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-60"
+            className="w-full rounded-lg bg-blue-600 py-2 text-sm font-medium text-white hover:bg-blue-500 transition-colors disabled:opacity-60"
           >
             {loading ? 'Entrando...' : 'Entrar'}
           </button>
         </form>
 
-        <p className="text-center text-sm">
+        <p className="text-center text-sm text-slate-400">
           ¿No tienes cuenta?{' '}
-          <a href="/auth/register" className="text-blue-600 hover:underline">
+          <a href="/auth/register" className="text-blue-400 hover:text-blue-300 hover:underline">
             Regístrate
           </a>
         </p>
       </div>
-    </div>
+    </main>
   );
 }

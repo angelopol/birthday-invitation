@@ -17,7 +17,8 @@ export async function POST(request: Request) {
   const partyDateRaw = formData.get('partyDate') as string | null;
   const ubication = (formData.get('ubication') as string | null) ?? '';
   const dressCode = (formData.get('dressCode') as string | null) ?? '';
-  const extraInfo = (formData.get('extraInfo') as string | null) ?? '';
+  const extraInfoRaw = (formData.get('extraInfo') as string | null) ?? '';
+  const extraInfo = extraInfoRaw.slice(0, 2000);
 
   let partyDate: Date | null = null;
   if (partyDateRaw) {

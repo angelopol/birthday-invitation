@@ -16,9 +16,9 @@ datasource db {
 model BirthdayPeople {
   username   String  @id @db.VarChar(191)
   password   String
-  partyDate  DateTime
-  ubication  String
-  dressCode  String
+  partyDate  DateTime?
+  ubication  String?
+  dressCode  String?
   extraInfo  String?
 
   guests     Guest[]
