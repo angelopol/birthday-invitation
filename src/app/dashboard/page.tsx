@@ -42,6 +42,12 @@ export default async function DashboardPage() {
           >
             Galería
           </a>
+          <a
+            href="/dashboard/playlist"
+            className="inline-flex items-center justify-center rounded-lg bg-emerald-700 px-4 py-2 font-medium text-white hover:bg-emerald-600 transition-colors"
+          >
+            Playlist de la fiesta
+          </a>
           {username && (
             <a
               href={`/${username}`}

@@ -48,6 +48,63 @@ async function getSpotifyAppToken(): Promise<string> {
   return cachedToken.accessToken;
 }
 
+export async function exchangeSpotifyAuthCode(code: string, redirectUri: string) {
+  const clientId = process.env.SPOTIFY_CLIENT_ID;
+  const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
+
+  if (!clientId || !clientSecret) {
+    throw new Error("Faltan SPOTIFY_CLIENT_ID o SPOTIFY_CLIENT_SECRET en el entorno");
+  }
+
+  const body = new URLSearchParams();
+  body.set("grant_type", "authorization_code");
+  body.set("code", code);
+  body.set("redirect_uri", redirectUri);
+
+  const res = await fetch("https://accounts.spotify.com/api/token", {
+    method: "POST",
+    headers: {
+      Authorization: "Basic " + Buffer.from(`${clientId}:${clientSecret}`).toString("base64"),
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: body.toString(),
+  });
+
+  if (!res.ok) {
+    throw new Error("No se pudo intercambiar el código de Spotify");
+  }
+
+  return res.json();
+}
+
+export async function refreshSpotifyToken(refreshToken: string) {
+  const clientId = process.env.SPOTIFY_CLIENT_ID;
+  const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
+
+  if (!clientId || !clientSecret) {
+    throw new Error("Faltan SPOTIFY_CLIENT_ID o SPOTIFY_CLIENT_SECRET en el entorno");
+  }
+
+  const body = new URLSearchParams();
+  body.set("grant_type", "refresh_token");
+  body.set("refresh_token", refreshToken);
+
+  const res = await fetch("https://accounts.spotify.com/api/token", {
+    method: "POST",
+    headers: {
+      Authorization: "Basic " + Buffer.from(`${clientId}:${clientSecret}`).toString("base64"),
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: body.toString(),
+  });
+
+  if (!res.ok) {
+    throw new Error("No se pudo refrescar el token de Spotify");
+  }
+
+  return res.json();
+}
+
 export async function searchTracks(query: string): Promise<SpotifyTrack[]> {
   const q = query.trim();
   if (!q) return [];

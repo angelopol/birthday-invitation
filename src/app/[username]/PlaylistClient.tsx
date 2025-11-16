@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 interface PlaylistClientProps {
   username: string;
   invitation?: string;
+  spotifyPlaylistId?: string | null;
 }
 
 interface ApiTrack {
@@ -27,7 +28,7 @@ interface SpotifyTrackResult {
   previewUrl?: string;
 }
 
-export default function PlaylistClient({ username, invitation }: PlaylistClientProps) {
+export default function PlaylistClient({ username, invitation, spotifyPlaylistId }: PlaylistClientProps) {
   const [tracks, setTracks] = useState<ApiTrack[]>([]);
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SpotifyTrackResult[]>([]);
@@ -102,13 +103,53 @@ export default function PlaylistClient({ username, invitation }: PlaylistClientP
     }
   };
 
+  const handleDeleteTrack = async (trackId: number) => {
+    if (!invitation) {
+      toast.error("Usa tu enlace personal de invitado para gestionar tus canciones.");
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/playlist/delete-guest?invitation=${encodeURIComponent(invitation)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: trackId }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.error ?? "No se pudo eliminar la canción");
+        return;
+      }
+
+      setTracks((prev) => prev.filter((t) => t.id !== trackId));
+      toast.success("Canción eliminada de la playlist");
+    } catch (error) {
+      console.error(error);
+      toast.error("Error al eliminar la canción");
+    }
+  };
+
   return (
     <section className="mt-6 space-y-4">
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-lg font-semibold text-slate-100">Playlist de la fiesta</h2>
-        <p className="text-[11px] text-slate-500">
-          Cada invitad@ puede proponer hasta 3 canciones.
-        </p>
+        <div className="flex items-center gap-3">
+          <p className="text-[11px] text-slate-500">
+            Cada invitad@ puede proponer hasta 3 canciones.
+          </p>
+          {spotifyPlaylistId && (
+            <a
+              href={`https://open.spotify.com/playlist/${spotifyPlaylistId}`}
+              target="_blank"
+              rel="noreferrer"
+              className="text-[11px] text-green-400 underline-offset-2 hover:underline"
+            >
+              Ver playlist en Spotify
+            </a>
+          )}
+        </div>
       </div>
 
       <form onSubmit={handleSearch} className="flex gap-2 items-center">
@@ -198,6 +239,15 @@ export default function PlaylistClient({ username, invitation }: PlaylistClientP
                     className="h-8 w-28 sm:w-36"
                     src={track.previewUrl}
                   />
+                )}
+                {invitation && (
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteTrack(track.id)}
+                    className="ml-2 text-[11px] text-red-400 hover:text-red-300 underline-offset-2 hover:underline"
+                  >
+                    Quitar
+                  </button>
                 )}
               </li>
             ))}

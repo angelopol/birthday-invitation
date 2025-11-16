@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import { refreshSpotifyToken } from "@/lib/spotify";
 
-const MAX_TRACKS_PER_GUEST = 3;
+const MAX_TRACKS_PER_GUEST = Number(process.env.MAX_TRACKS_PER_GUEST ?? "3");
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -90,6 +91,56 @@ export async function POST(req: NextRequest) {
       previewUrl,
     },
   });
+
+  try {
+    const birthdayPerson = await prisma.birthdayPeople.findUnique({ where: { username: birthdayUsername! } });
+
+    if (birthdayPerson?.spotifyAccessToken) {
+      let accessToken = birthdayPerson.spotifyAccessToken;
+
+      if (
+        birthdayPerson.spotifyTokenExpiresAt &&
+        birthdayPerson.spotifyTokenExpiresAt <= new Date(Date.now() + 60_000) &&
+        birthdayPerson.spotifyRefreshToken
+      ) {
+        try {
+          const tokenData = await refreshSpotifyToken(birthdayPerson.spotifyRefreshToken);
+          accessToken = tokenData.access_token as string;
+          const expiresIn = (tokenData.expires_in as number) ?? 3600;
+          const expiresAt = new Date(Date.now() + expiresIn * 1000);
+
+          await prisma.birthdayPeople.update({
+            where: { username: birthdayUsername! },
+            data: {
+              spotifyAccessToken: accessToken,
+              spotifyTokenExpiresAt: expiresAt,
+            },
+          });
+        } catch (e) {
+          console.error("No se pudo refrescar el token de Spotify al agregar canción", e);
+        }
+      }
+
+      if (birthdayPerson.spotifyPlaylistId) {
+        try {
+          await fetch(`https://api.spotify.com/v1/playlists/${birthdayPerson.spotifyPlaylistId}/tracks`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              uris: [`spotify:track:${spotifyTrackId}`],
+            }),
+          });
+        } catch (e) {
+          console.error("No se pudo agregar la canción a la playlist de Spotify", e);
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Error al intentar sincronizar automáticamente con Spotify", error);
+  }
 
   return NextResponse.json({ track: created }, { status: 201 });
 }

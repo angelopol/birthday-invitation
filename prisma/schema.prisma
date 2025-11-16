@@ -26,6 +26,13 @@ model BirthdayPeople {
   secondaryColor String? // color secundario
   backgroundColor String? // fondo principal de la tarjeta
 
+  // Integración con Spotify
+  spotifyUserId          String?   @db.VarChar(191)
+  spotifyPlaylistId      String?   @db.VarChar(191)
+  spotifyAccessToken     String?   @db.Text
+  spotifyRefreshToken    String?   @db.Text
+  spotifyTokenExpiresAt  DateTime?
+
   guests        Guest[]
   galleryItems  PartysGallery[]
   partyTracks   PartyTrack[]

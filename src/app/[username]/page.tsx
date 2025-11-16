@@ -163,6 +163,7 @@ export default async function InvitationPage({ params, searchParams }: Invitatio
         <PlaylistClient
           username={effectiveUsername}
           invitation={token}
+          spotifyPlaylistId={birthdayPerson.spotifyPlaylistId}
         />
         </div>
       </div>
