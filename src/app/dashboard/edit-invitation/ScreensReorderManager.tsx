@@ -76,64 +76,18 @@ export default function ScreensReorderManager({ initialScreens }: Props) {
         </ol>
       </div>
 
-      <div className="space-y-4">
-        <div className="flex items-center justify-end">
-          {/* keep manual save as fallback in case autosave fails or user prefers it */}
-          <button
-            type="button"
-            onClick={() => {
-              const payload = ordered.map((s, i) => ({ id: s.id, order: i + 1 }));
-              saveOrder(payload);
-            }}
-            className="rounded-md bg-emerald-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-400"
-          >
-            Guardar secuencia
-          </button>
-        </div>
-        {ordered.map((screen) => {
-          const isSplit = (screen.layoutType ?? 'single') === 'split';
-          return (
-            <div key={screen.id} className="rounded-xl border border-slate-800 bg-slate-900/70 p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-100">Pantalla #{screen.order}</p>
-                  <p className="text-xs text-slate-500">Fondo: {screen.backgroundType === 'image' ? 'imagen' : 'color plano'}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <DuplicateScreenButton formId={`duplicate-screen-form-${screen.id}`} className="rounded-lg bg-sky-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-sky-400 transition" />
-                  <DeleteScreenButton formId={`delete-screen-form-${screen.id}`} className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-500 transition" />
-                </div>
-              </div>
-
-              {!isSplit ? (
-                <div className="rounded-lg border border-slate-800 bg-slate-950/50 p-4 space-y-3">
-                  <p className="text-xs font-medium text-slate-300">Constructor de bloques</p>
-                  <ScreenBlocksEditor screenId={screen.id} initialBlocks={(screen.content as any) ?? []} />
-                </div>
-              ) : (
-                <div className="rounded-lg border border-slate-800 bg-slate-950/50 p-4 space-y-3">
-                  <p className="text-xs font-medium text-slate-300">Constructor de fragmentos</p>
-                  <SplitFragmentsEditor
-                    screenId={screen.id}
-                    screenOrder={screen.order}
-                    initialFragments={(screen.fragments as any) ?? null}
-                    fallbackContent={(screen.content as any) ?? null}
-                    backgroundType={screen.backgroundType as 'image' | 'color'}
-                    backgroundImageUrl={screen.backgroundImageUrl}
-                    backgroundColor={screen.backgroundColor}
-                  />
-                </div>
-              )}
-
-              <ScreenBackgroundControls
-                screenId={screen.id}
-                backgroundType={screen.backgroundType as 'image' | 'color' | 'gradient'}
-                backgroundColor={screen.backgroundColor}
-                backgroundImageUrl={screen.backgroundImageUrl}
-              />
-            </div>
-          );
-        })}
+      <div className="flex items-center justify-end">
+        {/* keep manual save as fallback in case autosave fails or user prefers it */}
+        <button
+          type="button"
+          onClick={() => {
+            const payload = ordered.map((s, i) => ({ id: s.id, order: i + 1 }));
+            saveOrder(payload);
+          }}
+          className="rounded-md bg-emerald-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-400"
+        >
+          Guardar secuencia
+        </button>
       </div>
     </div>
   );

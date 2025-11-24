@@ -1,0 +1,24 @@
+{
+  "name": "BirthdayInvitation",
+  "short_name": "Invitation",
+  "description": "Crea y comparte invitaciones de cumpleaños personalizadas con galería y playlist.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f1724",
+  "theme_color": "#0ea5e9",
+  "icons": [
+    {
+      "src": "/balloons-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/file.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

@@ -25,16 +25,24 @@ export async function POST(request: Request) {
     ? null
     : Math.max(12, Math.min(24, Math.round(typographySize)));
 
-  await prisma.birthdayPeople.update({
-    where: { username },
-    data: {
-      primaryColor: primaryColor || undefined,
-      secondaryColor: secondaryColor || undefined,
-      backgroundColor: tertiaryColor || undefined,
-      typographyFamily: typographyFamily || undefined,
-      typographySize: safeTypographySize ?? undefined,
-    },
-  });
+  // Fetch existing record to avoid overwriting global background settings (image/gradient)
+  const existing = await prisma.birthdayPeople.findUnique({ where: { username }, select: { globalBackgroundMode: true } });
+
+  const updateData: Record<string, unknown> = {
+    primaryColor: primaryColor || undefined,
+    secondaryColor: secondaryColor || undefined,
+    typographyFamily: typographyFamily || undefined,
+    typographySize: safeTypographySize ?? undefined,
+  };
+
+  // Only update backgroundColor when the existing globalBackgroundMode is not image/gradient.
+  // This prevents the simple 'tertiaryColor' form input from unintentionally overwriting
+  // a background previously set as an image or gradient via the GlobalBackgroundControls.
+  if (!existing || (existing.globalBackgroundMode !== 'image' && existing.globalBackgroundMode !== 'gradient')) {
+    updateData.backgroundColor = tertiaryColor || undefined;
+  }
+
+  await prisma.birthdayPeople.update({ where: { username }, data: updateData });
 
   return NextResponse.redirect(new URL('/dashboard/edit-invitation', request.url));
 }
