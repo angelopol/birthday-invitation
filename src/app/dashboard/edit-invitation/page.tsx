@@ -9,7 +9,7 @@ import SplitFragmentsEditor from './SplitFragmentsEditor';
 import ScreenBackgroundControls from './ScreenBackgroundControls';
 import ScreensReorderManager from './ScreensReorderManager';
 import GlobalBackgroundControls from './GlobalBackgroundControls';
-import InvitationPreviewDock from './InvitationPreviewDock';
+import PreviewModal from './PreviewModal';
 import type { InvitationScreenData } from '@/components/InvitationRenderer';
 import DuplicateScreenButton from '@/components/DuplicateScreenButton';
 import DeleteScreenButton from '@/components/DeleteScreenButton';
@@ -100,6 +100,7 @@ export default async function EditInvitationPage() {
         birthdayUsername: currentUsername,
         order: nextOrder,
         layoutType: 'single',
+        backgroundType: 'color',
       },
     });
 
@@ -306,7 +307,7 @@ export default async function EditInvitationPage() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 px-4 py-10">
       <div className="mx-auto w-full max-w-7xl">
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.3fr)_minmax(320px,0.9fr)] 2xl:gap-8">
+        <div className="space-y-6 2xl:space-y-8">
           <div className="rounded-[28px] border border-slate-800/70 bg-slate-900/85 p-6 shadow-2xl sm:p-8 lg:p-10 space-y-10">
             <div className="space-y-1">
               <h1 className="text-2xl font-semibold">Editar invitación</h1>
@@ -457,7 +458,7 @@ export default async function EditInvitationPage() {
                             <option value="split">Pantalla dividida</option>
                           </select>
                           {isSplit && <input type="hidden" name="fragmentsJson" value="" readOnly />}
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <button
                               type="submit"
                               className="rounded-lg bg-emerald-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-400 transition"
@@ -474,7 +475,7 @@ export default async function EditInvitationPage() {
                           <input type="hidden" name="screenId" value={screen.id} />
                         </form>
                         {/* client-side buttons: duplicate then delete (both submit hidden server forms) */}
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
                           {/* @ts-ignore Server component can render client component */}
                           <DuplicateScreenButton
@@ -525,11 +526,10 @@ export default async function EditInvitationPage() {
               )}
             </section>
           </div>
-          <div style={previewThemeVars}>
-            <InvitationPreviewDock initialScreens={previewScreens} />
-          </div>
         </div>
       </div>
+
+      <PreviewModal initialScreens={previewScreens} themeStyle={previewThemeVars} />
     </main>
   );
 }

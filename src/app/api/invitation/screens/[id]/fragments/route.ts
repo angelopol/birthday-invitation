@@ -101,9 +101,9 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
   await prisma.invitationScreen.update({
     where: { id: screenId },
     data: {
-      fragments: normalizedFragments,
+      fragments: normalizedFragments as any,
       layoutType: "split",
-      content: null,
+      content: null as any,
     },
   });
 

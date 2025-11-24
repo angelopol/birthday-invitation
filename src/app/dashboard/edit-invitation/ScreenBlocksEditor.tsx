@@ -137,7 +137,7 @@ export default function ScreenBlocksEditor({ screenId, initialBlocks }: Props) {
       <div className="flex flex-wrap items-center gap-2">
         <div className="space-y-1">
           <div className="text-[11px]">Color de borde</div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <input
               type="color"
               value={(block as any).borderColor ?? '#000000'}
@@ -157,7 +157,7 @@ export default function ScreenBlocksEditor({ screenId, initialBlocks }: Props) {
 
         <div className="space-y-1">
           <div className="text-[11px]">Relleno</div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <input
               type="color"
               value={(block as any).backgroundColor && (block as any).backgroundColor !== 'transparent' ? (block as any).backgroundColor : '#000000'}

@@ -339,7 +339,7 @@ export default function SplitFragmentsEditor({
     const baseBlock = withBlockDefaults({
       ...createBlock(type),
       ...(preset ?? {}),
-    });
+    } as InvitationBlock);
     const newBlock: EditableBlock = {
       id: crypto.randomUUID?.() ?? Math.random().toString(36).slice(2),
       ...baseBlock,

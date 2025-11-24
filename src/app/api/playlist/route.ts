@@ -51,8 +51,9 @@ export async function POST(req: NextRequest) {
   let birthdayUsername: string | null = null;
   let guestToken: string | null = null;
 
-  if (session?.user?.username) {
-    birthdayUsername = session.user.username as string;
+  const sessionUser = (session?.user as any) ?? null;
+  if (sessionUser?.username) {
+    birthdayUsername = sessionUser.username as string;
   } else if (invitation) {
     const guest = await prisma.guest.findUnique({
       where: { token: invitation },

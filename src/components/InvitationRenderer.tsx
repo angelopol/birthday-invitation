@@ -65,6 +65,8 @@ export type InvitationBlock =
       color?: string;
       horizontalAlign?: "left" | "center" | "right";
       verticalAlign?: "top" | "center" | "bottom";
+      borderColor?: string | null;
+      backgroundColor?: string | null;
       panelEnabled?: boolean;
       panelShape?: "square" | "circle";
       panelColor?: string | null;
@@ -103,6 +105,7 @@ interface InvitationRendererProps {
   onOpenPlaylist: () => void;
   onOpenRsvp: () => void;
   guestName?: string | null;
+  previewMode?: "desktop" | "mobile";
 }
 
 export default function InvitationRenderer({
@@ -111,6 +114,7 @@ export default function InvitationRenderer({
   onOpenPlaylist,
   onOpenRsvp,
   guestName,
+  previewMode,
 }: InvitationRendererProps) {
   if (!screens.length) return null;
 
@@ -464,7 +468,7 @@ export default function InvitationRenderer({
       {screens
         .sort((a, b) => a.order - b.order)
         .map((screen) => {
-          const isSplit = screen.layoutType === "split" && screen.fragments?.length;
+              const isSplit = screen.layoutType === "split" && screen.fragments?.length && previewMode !== "mobile";
           return (
             <article
               key={screen.id}
@@ -479,37 +483,66 @@ export default function InvitationRenderer({
                   isSplit ? "invitation-screen__content--split" : "invitation-screen__content--single"
                 }`}
               >
-                {isSplit
-                  ? orderFragments(screen.fragments ?? []).map((fragment, idx) => (
+                {isSplit ? (
+                  orderFragments(screen.fragments ?? []).map((fragment, idx) => (
+                    <div
+                      key={fragment.id ?? `${fragment.position ?? "fragment"}-${idx}`}
+                      className="invitation-screen__fragment"
+                      data-position={fragment.position ?? "left"}
+                      style={getFragmentBackgroundStyle(fragment)}
+                    >
                       <div
-                        key={fragment.id ?? `${fragment.position ?? "fragment"}-${idx}`}
-                        className="invitation-screen__fragment"
-                        data-position={fragment.position ?? "left"}
-                        style={getFragmentBackgroundStyle(fragment)}
+                        className="invitation-screen__fragment-inner"
+                        style={getFragmentAlignmentStyle(fragment)}
                       >
-                        <div
-                          className="invitation-screen__fragment-inner"
-                          style={getFragmentAlignmentStyle(fragment)}
-                        >
-                          {(fragment.title || fragment.description) && (
-                            <div className="mb-3 space-y-1">
-                              {fragment.title && (
-                                <p className="text-xs uppercase tracking-[0.35em] text-slate-400">
-                                  {fragment.title}
-                                </p>
-                              )}
-                              {fragment.description && (
-                                <p className="text-[11px] text-slate-300/80 leading-relaxed whitespace-pre-line">
-                                  {fragment.description}
-                                </p>
-                              )}
-                            </div>
-                          )}
-                          {renderBlocks(fragment.content ?? [])}
-                        </div>
+                        {(fragment.title || fragment.description) && (
+                          <div className="mb-3 space-y-1">
+                            {fragment.title && (
+                              <p className="text-xs uppercase tracking-[0.35em] text-slate-400">
+                                {fragment.title}
+                              </p>
+                            )}
+                            {fragment.description && (
+                              <p className="text-[11px] text-slate-300/80 leading-relaxed whitespace-pre-line">
+                                {fragment.description}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                        {renderBlocks(fragment.content ?? [])}
                       </div>
-                    ))
-                  : renderBlocks(screen.content ?? [])}
+                    </div>
+                  ))
+                ) : screen.layoutType === "split" && previewMode === "mobile" ? (
+                  // Mobile preview for split layout: stack fragments vertically
+                  orderFragments(screen.fragments ?? []).map((fragment, idx) => (
+                    <div
+                      key={fragment.id ?? `${fragment.position ?? "fragment"}-${idx}`}
+                      className="invitation-screen__fragment-mobile rounded-lg mb-4"
+                      style={getFragmentBackgroundStyle(fragment)}
+                    >
+                      <div className="p-4" style={getFragmentAlignmentStyle(fragment)}>
+                        {(fragment.title || fragment.description) && (
+                          <div className="mb-3 space-y-1">
+                            {fragment.title && (
+                              <p className="text-xs uppercase tracking-[0.35em] text-slate-400">
+                                {fragment.title}
+                              </p>
+                            )}
+                            {fragment.description && (
+                              <p className="text-[11px] text-slate-300/80 leading-relaxed whitespace-pre-line">
+                                {fragment.description}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                        {renderBlocks(fragment.content ?? [])}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  renderBlocks(screen.content ?? [])
+                )}
               </div>
             </article>
           );

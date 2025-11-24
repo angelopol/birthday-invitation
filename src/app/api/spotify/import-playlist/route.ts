@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     let nextUrl: string | null = `https://api.spotify.com/v1/playlists/${playlistId}/tracks`;
 
     while (nextUrl) {
-      const res = await fetch(nextUrl, {
+      const res: any = await fetch(nextUrl, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },

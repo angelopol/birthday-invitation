@@ -94,12 +94,12 @@ function applyThemeVariables(theme?: ThemeConfig | null) {
         : DEFAULT_THEME.typographySize,
   };
 
-  const textColor = getContrastColor(resolved.tertiaryColor);
+  const textColor = getContrastColor(resolved.tertiaryColor as string);
   const mutedColor = shadeColor(textColor, textColor === "#0f172a" ? 35 : -30);
-  const borderColor = shadeColor(resolved.tertiaryColor, textColor === "#0f172a" ? 35 : -35);
-  const elevatedSurface = shadeColor(resolved.tertiaryColor, textColor === "#0f172a" ? 12 : -12);
-  const buttonText = getContrastColor(resolved.primaryColor);
-  const secondaryButtonText = getContrastColor(resolved.secondaryColor);
+  const borderColor = shadeColor(resolved.tertiaryColor as string, textColor === "#0f172a" ? 35 : -35);
+  const elevatedSurface = shadeColor(resolved.tertiaryColor as string, textColor === "#0f172a" ? 12 : -12);
+  const buttonText = getContrastColor(resolved.primaryColor as string);
+  const secondaryButtonText = getContrastColor(resolved.secondaryColor as string);
 
   const root = document.documentElement;
   root.style.setProperty("--theme-primary", resolved.primaryColor);
@@ -117,13 +117,15 @@ function applyThemeVariables(theme?: ThemeConfig | null) {
 }
 
 function commitRegistryTheme() {
-  let selected: ControllerSnapshot | null = null;
+  let selectedTheme: ThemeConfig | null = null;
+  let highestPriority = Number.NEGATIVE_INFINITY;
   controllerRegistry.forEach((snapshot) => {
-    if (!selected || snapshot.priority >= selected.priority) {
-      selected = snapshot;
+    if (snapshot.priority >= highestPriority) {
+      highestPriority = snapshot.priority;
+      selectedTheme = snapshot.theme;
     }
   });
-  applyThemeVariables(selected?.theme ?? null);
+  applyThemeVariables(selectedTheme);
 }
 
 type ThemeControllerProps = {

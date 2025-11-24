@@ -33,7 +33,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     data: {
       content: body.content,
       layoutType: "single",
-      fragments: null,
+      fragments: body.fragments ?? undefined,
     },
   });
 
