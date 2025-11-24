@@ -1,14 +1,22 @@
 "use client";
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { signIn } from 'next-auth/react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 
 export default function LoginPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const errorParam = searchParams.get('error');
+  const [errorParam, setErrorParam] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      setErrorParam(params.get('error'));
+    } catch (e) {
+      setErrorParam(null);
+    }
+  }, []);
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');

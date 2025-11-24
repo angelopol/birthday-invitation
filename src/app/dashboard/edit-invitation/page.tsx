@@ -396,12 +396,14 @@ export default async function EditInvitationPage() {
                 </div>
               </div>
 
-              <button
-                type="submit"
-                className="w-full rounded-lg bg-blue-600 py-2 text-sm font-medium text-white hover:bg-blue-500 transition-colors"
-              >
-                Guardar cambios
-              </button>
+              <div className="mt-4 flex justify-end">
+                <button
+                  type="submit"
+                  className="inline-flex items-center rounded-lg bg-blue-600 px-6 py-2 text-sm font-medium text-white hover:bg-blue-500 transition"
+                >
+                  Guardar cambios
+                </button>
+              </div>
             </form>
 
             <section className="pt-6 border-t border-slate-800 space-y-4">
