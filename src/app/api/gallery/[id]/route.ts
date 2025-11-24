@@ -6,8 +6,9 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  context: { params: any }
 ) {
+  const { params } = context;
   const url = new URL(req.url);
   const token = url.searchParams.get("token");
 

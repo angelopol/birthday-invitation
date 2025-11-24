@@ -1,9 +1,9 @@
 -- AlterTable
-ALTER TABLE `guest` ADD COLUMN `avatarUrl` VARCHAR(512) NULL,
+ALTER TABLE `Guest` ADD COLUMN `avatarUrl` VARCHAR(512) NULL,
     ADD COLUMN `nickname` VARCHAR(255) NULL;
 
 -- AlterTable
-ALTER TABLE `partytrack` ADD COLUMN `comment` VARCHAR(280) NULL;
+ALTER TABLE `PartyTrack` ADD COLUMN `comment` VARCHAR(280) NULL;
 
 -- CreateTable
 CREATE TABLE `PartyTrackVote` (
