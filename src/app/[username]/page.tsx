@@ -1,11 +1,12 @@
 import ConfirmButton from './ConfirmButton';
-import GalleryClient from './GalleryClient';
-import PlaylistClient from './PlaylistClient';
+import InvitationRendererWrapper from '@/components/InvitationRendererWrapper';
+import ThemeController from '@/components/ThemeController';
+import InvitationThemeActivator from '@/components/InvitationThemeActivator';
 import { notFound } from 'next/navigation';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { prisma } from '@/lib/prisma';
-import { getPublicUrl } from '@/lib/s3';
+import { normalizeBackgroundImageUrl } from '@/lib/backgrounds';
 
 export const metadata = {
   title: 'Invitación de cumpleaños — BirthdayInvitation',
@@ -42,16 +43,9 @@ export default async function InvitationPage({ params, searchParams }: Invitatio
     notFound();
   }
 
-  const formattedDate = birthdayPerson.partyDate
-    ? birthdayPerson.partyDate.toLocaleString('es-ES', {
-        dateStyle: 'long',
-        timeStyle: 'short',
-      })
-    : null;
-
   const primaryColor = birthdayPerson.primaryColor || '#38bdf8';
   const secondaryColor = birthdayPerson.secondaryColor || '#6366f1';
-  const cardBackground = birthdayPerson.backgroundColor || '#020617';
+  const tertiaryColor = birthdayPerson.backgroundColor || '#020617';
 
   let guestName: string | null = null;
   if (token) {
@@ -76,116 +70,83 @@ export default async function InvitationPage({ params, searchParams }: Invitatio
     guestName: item.guest?.nickname || item.guest?.name || null,
   }));
 
+  const screensRaw = await prisma.invitationScreen.findMany({
+    where: { birthdayUsername: effectiveUsername },
+    orderBy: { order: 'asc' },
+  });
+
+  const screens = screensRaw.map(screen => {
+    const fragments = Array.isArray(screen.fragments)
+      ? (screen.fragments as any[]).map(fragment => ({
+          ...fragment,
+          backgroundImageUrl: normalizeBackgroundImageUrl(fragment?.backgroundImageUrl),
+        }))
+      : screen.fragments;
+
+    return {
+      id: screen.id,
+      order: screen.order,
+      backgroundType: screen.backgroundType as 'image' | 'color',
+      backgroundImageUrl: normalizeBackgroundImageUrl(screen.backgroundImageUrl),
+      backgroundColor: screen.backgroundColor,
+      layoutType: (screen.layoutType as 'single' | 'split') ?? 'single',
+      content: (screen.content as any) ?? [],
+      fragments: (fragments as any) ?? null,
+    };
+  });
+
+  const typographyFamily = birthdayPerson.typographyFamily ?? undefined;
+  const typographySize = birthdayPerson.typographySize ?? undefined;
+
   return (
+    <>
+      <ThemeController
+        initialTheme={{
+          primaryColor,
+          secondaryColor,
+          tertiaryColor,
+          typographyFamily,
+          typographySize,
+        }}
+        priority={10}
+        autoFetch={false}
+      />
+      <InvitationThemeActivator />
     <main
       className="min-h-screen flex"
       style={{
         backgroundImage:
           `radial-gradient(circle at top, ${primaryColor}22, transparent 55%), ` +
-          `radial-gradient(circle at bottom, ${secondaryColor}22, #020617 60%)`,
-        backgroundColor: '#020617',
+          `radial-gradient(circle at bottom, ${primaryColor}22, ${tertiaryColor} 60%)`,
+        backgroundColor: tertiaryColor,
       }}
     >
-      <div className="flex-1 flex items-center justify-center px-4 py-10">
-        <div
-          className="w-full max-w-2xl rounded-3xl border shadow-[0_24px_70px_rgba(15,23,42,0.95)] p-6 sm:p-10 space-y-8"
-          style={{
-            borderColor: secondaryColor,
-            backgroundColor: cardBackground,
-            boxShadow: `0 25px 50px -12px ${secondaryColor}66`,
-          }}
-        >
-        <div className="space-y-3 text-center">
-          <p className="text-[11px] uppercase tracking-[0.25em] text-slate-400">
-            {guestName ? `${guestName}, estás invitad@` : 'Estás invitad@s'}
-          </p>
-          <h1 className="text-3xl sm:text-4xl font-semibold">
-            Celebración de <span style={{ color: primaryColor }}>{effectiveUsername}</span>
-          </h1>
-          <p className="text-sm text-slate-400 max-w-md mx-auto">
-            Guarda la fecha, revisa los detalles y confirma tu asistencia para que podamos contar contigo.
-          </p>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 space-y-1">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Fecha y hora</p>
-            {formattedDate ? (
-              <p className="text-sm text-slate-100">{formattedDate}</p>
+      <div className="flex-1 flex flex-col items-center justify-start px-4 py-10 gap-8 invitation-theme">
+        {screens.length > 0 ? (
+          <InvitationRendererWrapper
+            screens={screens}
+            galleryItems={gallery}
+            guestToken={token}
+            guestName={guestName}
+            username={effectiveUsername}
+            spotifyPlaylistId={birthdayPerson.spotifyPlaylistId}
+            primaryColor={primaryColor}
+          />
+        ) : (
+          <div className="w-full max-w-3xl rounded-2xl border border-slate-800 bg-slate-900/70 p-6 text-center space-y-3">
+            <p className="text-sm text-slate-200 font-medium">El anfitrión aún no ha publicado el diseño de la invitación.</p>
+            {token ? (
+              <div className="flex flex-col items-center gap-2">
+                <p className="text-xs text-slate-500">Aprovecha para confirmar tu asistencia mientras tanto.</p>
+                <ConfirmButton token={token} primaryColor={primaryColor} className="border-0 mt-0 pt-0" />
+              </div>
             ) : (
-              <p className="text-xs text-slate-500">
-                El cumpleañero aún no ha configurado la fecha.
-              </p>
+              <p className="text-xs text-slate-500">Vuelve pronto para descubrir la experiencia completa.</p>
             )}
-          </div>
-
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 space-y-1">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Ubicación</p>
-            {birthdayPerson.ubication ? (
-              <a
-                href={birthdayPerson.ubication}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300 underline-offset-2 hover:underline"
-              >
-                Ver en Google Maps
-              </a>
-            ) : (
-              <p className="text-xs text-slate-500">
-                El cumpleañero aún no ha configurado la ubicación.
-              </p>
-            )}
-          </div>
-
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 space-y-1 sm:col-span-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Dress code</p>
-            {birthdayPerson.dressCode ? (
-              <a
-                href={birthdayPerson.dressCode}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300 underline-offset-2 hover:underline"
-              >
-                Ver tablero en Pinterest
-              </a>
-            ) : (
-              <p className="text-xs text-slate-500">
-                El cumpleañero aún no ha configurado el dress code.
-              </p>
-            )}
-          </div>
-        </div>
-
-        {birthdayPerson.extraInfo && (
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Detalles adicionales</p>
-            <p className="text-sm text-slate-100 whitespace-pre-line">{birthdayPerson.extraInfo}</p>
           </div>
         )}
-
-        {token && (
-          <div className="pt-4 border-t border-slate-800 mt-4 space-y-4">
-            <div className="flex justify-center">
-              <ConfirmButton token={token} primaryColor={primaryColor} />
-            </div>
-            <p className="text-[11px] text-slate-500 text-center max-w-sm mx-auto">
-              Este enlace es solo para ti. Si cambias de opinión más adelante, puedes volver aquí y actualizar tu respuesta.
-            </p>
-          </div>
-        )}
-
-        <GalleryClient
-          initialItems={gallery}
-          token={token}
-        />
-
-        <PlaylistClient
-          username={effectiveUsername}
-          invitation={token}
-          spotifyPlaylistId={birthdayPerson.spotifyPlaylistId}
-        />
-        </div>
       </div>
     </main>
+    </>
   );
 }

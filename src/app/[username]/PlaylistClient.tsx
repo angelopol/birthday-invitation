@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import toast from "react-hot-toast";
 
 interface PlaylistClientProps {
   username: string;
   invitation?: string;
   spotifyPlaylistId?: string | null;
+  className?: string;
 }
 
 interface ApiTrack {
@@ -36,7 +37,14 @@ interface SpotifyTrackResult {
   comment?: string;
 }
 
-export default function PlaylistClient({ username, invitation, spotifyPlaylistId }: PlaylistClientProps) {
+const THEME_PRIMARY = "var(--theme-primary, #38bdf8)";
+const THEME_PRIMARY_TEXT = "var(--theme-button-text, #0f172a)";
+const THEME_PRIMARY_SOFT = "color-mix(in srgb, var(--theme-primary, #38bdf8) 15%, transparent)";
+const SURFACE_BG = "color-mix(in srgb, var(--theme-tertiary, #020617) 94%, rgba(2, 6, 23, 0.45))";
+const SURFACE_BG_SOFT = "color-mix(in srgb, var(--theme-tertiary, #020617) 90%, rgba(2, 6, 23, 0.35))";
+const SURFACE_BORDER = "color-mix(in srgb, var(--theme-primary, #38bdf8) 25%, rgba(15, 23, 42, 0.65))";
+
+export default function PlaylistClient({ username, invitation, spotifyPlaylistId, className }: PlaylistClientProps) {
   const [tracks, setTracks] = useState<ApiTrack[]>([]);
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SpotifyTrackResult[]>([]);
@@ -44,6 +52,49 @@ export default function PlaylistClient({ username, invitation, spotifyPlaylistId
   const [addingId, setAddingId] = useState<string | null>(null);
   const [commentByTrack, setCommentByTrack] = useState<Record<string, string>>({});
   const [likedIds, setLikedIds] = useState<Set<number>>(new Set());
+
+  const primaryButtonStyle: CSSProperties = {
+    background: THEME_PRIMARY,
+    color: THEME_PRIMARY_TEXT,
+    borderColor: THEME_PRIMARY,
+  };
+
+  const outlineButtonStyle: CSSProperties = {
+    borderColor: THEME_PRIMARY,
+    color: THEME_PRIMARY_TEXT,
+    background: THEME_PRIMARY,
+    // ensure sufficient contrast and a little elevation
+    boxShadow: "0 1px 0 rgba(2,6,23,0.25)",
+  };
+
+  const likedButtonStyle: CSSProperties = {
+    borderColor: THEME_PRIMARY,
+    color: THEME_PRIMARY,
+    background: THEME_PRIMARY_SOFT,
+  };
+
+  const rankingBadgeStyle: CSSProperties = {
+    background: "color-mix(in srgb, var(--theme-primary, #38bdf8) 70%, rgba(255, 255, 255, 0.25))",
+    color: THEME_PRIMARY_TEXT,
+    border: "1px solid color-mix(in srgb, var(--theme-primary, #38bdf8) 60%, rgba(15, 23, 42, 0.35))",
+  };
+
+  const elevatedSurfaceStyle: CSSProperties = {
+    background: SURFACE_BG,
+    borderColor: SURFACE_BORDER,
+    boxShadow: "0 20px 50px rgba(2, 6, 23, 0.35)",
+  };
+
+  const surfaceItemStyle: CSSProperties = {
+    background: SURFACE_BG_SOFT,
+    borderColor: SURFACE_BORDER,
+  };
+
+  const inputSurfaceStyle: CSSProperties = {
+    background: SURFACE_BG,
+    borderColor: SURFACE_BORDER,
+    color: "var(--theme-text, #f8fafc)",
+  };
 
   useEffect(() => {
     const fetchTracks = async () => {
@@ -190,26 +241,31 @@ export default function PlaylistClient({ username, invitation, spotifyPlaylistId
     }
   };
 
+  const containerClass = `space-y-4 ${className ?? "mt-6"}`;
+
   return (
-    <section className="mt-6 space-y-4">
+    <section className={containerClass}>
       {tracks.length > 0 && (
-        <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-3 space-y-2">
+        <div className="rounded-xl border p-3 space-y-2" style={elevatedSurfaceStyle}>
           <div className="flex items-center justify-between gap-2">
-            <p className="text-xs font-semibold text-slate-200">Lo que se viene</p>
-            <p className="text-[10px] text-slate-500">Top canciones más votadas</p>
+            <p className="text-xs font-semibold text-theme-base">Lo que se viene</p>
+            <p className="text-[10px] text-theme-muted">Top canciones más votadas</p>
           </div>
-          <ol className="space-y-1 text-[11px] text-slate-200">
+          <ol className="space-y-1 text-[11px] text-theme-base">
             {tracks.slice(0, 5).map((track, index) => (
               <li key={track.id} className="flex items-center gap-2">
-                <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-slate-800 text-[9px] text-slate-300">
+                <span
+                  className="inline-flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-semibold"
+                  style={rankingBadgeStyle}
+                >
                   {index + 1}
                 </span>
                 <div className="flex-1 min-w-0">
                   <p className="truncate">
-                    {track.title} <span className="text-slate-400">· {track.artist}</span>
+                    {track.title} <span className="text-theme-muted">· {track.artist}</span>
                   </p>
                 </div>
-                <span className="text-[10px] text-slate-500 whitespace-nowrap">
+                <span className="text-[10px] text-theme-muted whitespace-nowrap">
                   {(track.votesCount ?? 0)} ❤
                 </span>
               </li>
@@ -220,13 +276,13 @@ export default function PlaylistClient({ username, invitation, spotifyPlaylistId
 
       <div className="flex items-center justify-between gap-2">
         <div className="space-y-0.5">
-          <h2 className="text-lg font-semibold text-slate-100">Playlist de la fiesta</h2>
-          <p className="text-[11px] text-slate-400">
+          <h2 className="text-lg font-semibold text-theme-base">Playlist de la fiesta</h2>
+          <p className="text-[11px] text-theme-muted">
             Busca canciones en Spotify y proponlas para que suenen en la fiesta.
           </p>
         </div>
         <div className="flex flex-col items-end gap-1">
-          <p className="text-[11px] text-slate-500">
+          <p className="text-[11px] text-theme-muted">
             Cada invitad@ puede proponer hasta 3 canciones.
           </p>
           {spotifyPlaylistId && (
@@ -248,12 +304,14 @@ export default function PlaylistClient({ username, invitation, spotifyPlaylistId
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Busca una canción en Spotify"
-          className="flex-1 rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500"
+          className="flex-1 rounded-lg border px-3 py-2 text-sm text-theme-base placeholder-theme-muted focus:outline-none focus:ring-2 focus:ring-sky-500"
+          style={inputSurfaceStyle}
         />
         <button
           type="submit"
           disabled={loadingSearch}
-          className="rounded-lg bg-sky-500 px-3 py-2 text-xs font-medium text-slate-950 hover:bg-sky-400 disabled:opacity-60"
+          className="rounded-lg px-3 py-2 text-xs font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-0"
+          style={primaryButtonStyle}
         >
           {loadingSearch ? "Buscando..." : "Buscar"}
         </button>
@@ -261,12 +319,13 @@ export default function PlaylistClient({ username, invitation, spotifyPlaylistId
 
       {searchResults.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs text-slate-400">Resultados</p>
+          <p className="text-xs text-theme-muted">Resultados</p>
           <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
             {searchResults.map((track) => (
               <div
                 key={track.spotifyTrackId}
-                className="flex items-center gap-3 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2"
+                className="flex items-center gap-3 rounded-lg border px-3 py-2"
+                style={surfaceItemStyle}
               >
                 {track.coverUrl && (
                   <img
@@ -276,10 +335,10 @@ export default function PlaylistClient({ username, invitation, spotifyPlaylistId
                   />
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-slate-100 truncate">{track.title}</p>
-                  <p className="text-[11px] text-slate-400 truncate">{track.artist}</p>
+                  <p className="text-xs font-medium text-theme-base truncate">{track.title}</p>
+                  <p className="text-[11px] text-theme-muted truncate">{track.artist}</p>
                   {track.album && (
-                    <p className="text-[10px] text-slate-500 truncate">{track.album}</p>
+                    <p className="text-[10px] text-theme-muted truncate">{track.album}</p>
                   )}
                   <input
                     type="text"
@@ -291,7 +350,8 @@ export default function PlaylistClient({ username, invitation, spotifyPlaylistId
                       }))
                     }
                     placeholder="Dedicatoria (opcional)"
-                    className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900/60 px-2 py-1 text-[10px] text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                    className="mt-1 w-full rounded-md border px-2 py-1 text-[10px] text-theme-base placeholder-theme-muted focus:outline-none focus:ring-1 focus:ring-sky-500"
+                    style={inputSurfaceStyle}
                     maxLength={280}
                   />
                 </div>
@@ -299,7 +359,8 @@ export default function PlaylistClient({ username, invitation, spotifyPlaylistId
                   type="button"
                   onClick={() => handleAddTrack(track)}
                   disabled={addingId === track.spotifyTrackId}
-                  className="rounded-full border border-sky-500 px-3 py-1 text-[11px] font-medium text-sky-300 hover:bg-sky-500/10 disabled:opacity-60"
+                  className="rounded-full border px-3 py-1 text-[11px] font-medium transition-colors disabled:opacity-60"
+                  style={outlineButtonStyle}
                 >
                   {addingId === track.spotifyTrackId ? "Agregando..." : "Agregar"}
                 </button>
@@ -310,9 +371,9 @@ export default function PlaylistClient({ username, invitation, spotifyPlaylistId
       )}
 
       <div className="space-y-2">
-        <p className="text-xs text-slate-400">Playlist actual</p>
+        <p className="text-xs text-theme-muted">Playlist actual</p>
         {tracks.length === 0 ? (
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-theme-muted">
             Aún no hay canciones en la playlist. ¡Sé de l@s primer@s en proponer!
           </p>
         ) : (
@@ -320,7 +381,8 @@ export default function PlaylistClient({ username, invitation, spotifyPlaylistId
             {tracks.map((track) => (
               <li
                 key={track.id}
-                className="flex items-center gap-3 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2"
+                className="flex items-center gap-3 rounded-lg border px-3 py-2"
+                style={surfaceItemStyle}
               >
                 {track.coverUrl && (
                   <img
@@ -330,13 +392,16 @@ export default function PlaylistClient({ username, invitation, spotifyPlaylistId
                   />
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-slate-100 truncate">{track.title}</p>
-                  <p className="text-[11px] text-slate-400 truncate">{track.artist}</p>
+                  <p className="text-xs font-medium text-theme-base truncate">{track.title}</p>
+                  <p className="text-[11px] text-theme-muted truncate">{track.artist}</p>
                   {track.album && (
-                    <p className="text-[10px] text-slate-500 truncate">{track.album}</p>
+                    <p className="text-[10px] text-theme-muted truncate">{track.album}</p>
                   )}
                   {track.comment && (
-                    <p className="mt-0.5 text-[10px] text-sky-300 line-clamp-2">
+                    <p
+                      className="mt-0.5 text-[10px] font-medium line-clamp-2"
+                      style={{ color: THEME_PRIMARY }}
+                    >
                       “{track.comment}”
                     </p>
                   )}
@@ -349,7 +414,7 @@ export default function PlaylistClient({ username, invitation, spotifyPlaylistId
                           className="h-4 w-4 rounded-full object-cover"
                         />
                       )}
-                      <span className="text-[10px] text-slate-500 truncate">
+                      <span className="text-[10px] text-theme-muted truncate">
                         Propuesta por {track.guest.nickname ?? track.guest.name}
                       </span>
                     </div>
@@ -366,15 +431,12 @@ export default function PlaylistClient({ username, invitation, spotifyPlaylistId
                   <button
                     type="button"
                     onClick={() => toggleLike(track)}
-                    className={`text-[11px] px-2 py-1 rounded-full border ${
-                      likedIds.has(track.id)
-                        ? "border-pink-400 text-pink-300 bg-pink-500/10"
-                        : "border-slate-600 text-slate-300 hover:border-pink-400 hover:text-pink-300"
-                    }`}
+                    className="text-[11px] px-2 py-1 rounded-full border transition-colors"
+                    style={likedIds.has(track.id) ? likedButtonStyle : outlineButtonStyle}
                   >
                     {likedIds.has(track.id) ? "♥ Me gusta" : "♡ Me gusta"}
                   </button>
-                  <span className="text-[10px] text-slate-500">
+                  <span className="text-[10px] text-theme-muted">
                     {(track.votesCount ?? 0) === 1
                       ? "1 voto"
                       : `${track.votesCount ?? 0} votos`}

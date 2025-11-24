@@ -18,9 +18,11 @@ export default function UIChrome({ children }: UIChromeProps) {
           position="top-right"
           toastOptions={{
             style: {
-              background: "#020617",
-              color: "#e5e7eb",
-              border: "1px solid #1e293b",
+              background: "var(--theme-tertiary, #020617)",
+              color: "var(--theme-text, #e5e7eb)",
+              border: "1px solid var(--theme-secondary, #1e293b)",
+              fontFamily: "var(--theme-font-family, var(--font-geist-sans))",
+              fontSize: "var(--theme-font-size, 14px)",
             },
           }}
         />

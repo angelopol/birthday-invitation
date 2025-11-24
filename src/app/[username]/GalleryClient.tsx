@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import UploadMedia from "./UploadMedia";
 
-type GalleryItem = {
+export type GalleryItem = {
   id: number;
   fileName: string;
   fileType: string;
@@ -15,13 +15,19 @@ type GalleryItem = {
 interface GalleryClientProps {
   initialItems: GalleryItem[];
   token?: string;
+  className?: string;
+  onItemsAdded?: (items: GalleryItem[]) => void;
 }
 
-export default function GalleryClient({ initialItems, token }: GalleryClientProps) {
+export default function GalleryClient({ initialItems, token, className, onItemsAdded }: GalleryClientProps) {
   const [items, setItems] = useState<GalleryItem[]>(initialItems);
   const [loadingIds, setLoadingIds] = useState<Set<number>>(new Set());
   const [canRenderGrid, setCanRenderGrid] = useState(false);
   const [lightboxItem, setLightboxItem] = useState<GalleryItem | null>(null);
+
+  useEffect(() => {
+    setItems(initialItems);
+  }, [initialItems]);
 
   useEffect(() => {
     const id = window.setTimeout(() => setCanRenderGrid(true), 120);
@@ -36,6 +42,7 @@ export default function GalleryClient({ initialItems, token }: GalleryClientProp
     }));
 
     setItems(prev => [...normalized, ...prev]);
+    onItemsAdded?.(normalized);
   };
 
   const handleLoadStart = (id: number) => {
@@ -70,8 +77,10 @@ export default function GalleryClient({ initialItems, token }: GalleryClientProp
   // Eliminación deshabilitada de momento: la API de borrado sigue existiendo,
   // pero la acción desde el lightbox se ha retirado para evitar errores.
 
+  const containerClass = `space-y-3 ${className ?? "pt-6 border-t border-slate-800"}`;
+
   return (
-    <div className="pt-6 border-t border-slate-800 space-y-3">
+    <div className={containerClass}>
       {token && (
         <div className="space-y-3">
           <h2 className="text-sm font-semibold text-slate-200">Sube tus recuerdos</h2>
@@ -158,14 +167,30 @@ export default function GalleryClient({ initialItems, token }: GalleryClientProp
             <div className="absolute top-3 right-3 flex gap-2">
               <button
                 type="button"
-                className="rounded-full bg-black/70 px-3 py-1 text-[11px] text-slate-100 border border-slate-600 hover:bg-black/90"
+                aria-label="Descargar imagen"
+                className="rounded-full px-3 py-1 text-[11px] font-medium hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                style={{
+                  background: 'var(--theme-primary, #38bdf8)',
+                  color: 'var(--theme-button-text, #ffffff)',
+                  border: '1px solid var(--theme-border, rgba(100,100,100,0.25))',
+                  // ensure focus ring uses theme primary when available
+                  ['--tw-ring-color' as any]: 'var(--theme-primary, #38bdf8)',
+                }}
                 onClick={() => handleDownload(lightboxItem)}
               >
                 Descargar
               </button>
               <button
                 type="button"
-                className="rounded-full bg-black/70 px-3 py-1 text-[11px] text-slate-100 border border-slate-600 hover:bg-black/90"
+                aria-label="Cerrar vista previa"
+                className="rounded-full px-3 py-1 text-[11px] font-medium hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                style={{
+                  // Use elevated surface + theme text so the button contrasts with modal background
+                  background: 'var(--theme-surface-elevated, rgba(255,255,255,0.04))',
+                  color: 'var(--theme-text, #ffffff)',
+                  border: '1px solid var(--theme-border, rgba(100,100,100,0.25))',
+                  ['--tw-ring-color' as any]: 'var(--theme-primary, #38bdf8)',
+                }}
                 onClick={handleCloseLightbox}
               >
                 Cerrar

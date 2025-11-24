@@ -25,6 +25,8 @@ model BirthdayPeople {
   primaryColor   String? // color principal (botones, acentos)
   secondaryColor String? // color secundario
   backgroundColor String? // fondo principal de la tarjeta
+  typographyFamily String?
+  typographySize   Int?
 
   // Integración con Spotify
   spotifyUserId          String?   @db.VarChar(191)
@@ -33,9 +35,14 @@ model BirthdayPeople {
   spotifyRefreshToken    String?   @db.Text
   spotifyTokenExpiresAt  DateTime?
 
+  // Fondo global de la invitación: modo (color|image|gradient) y URL de imagen opcional
+  globalBackgroundMode   String?   @db.VarChar(20)
+  globalBackgroundImageUrl String? @db.VarChar(512)
+
   guests        Guest[]
   galleryItems  PartysGallery[]
   partyTracks   PartyTrack[]
+  invitationScreens InvitationScreen[]
 }
 
 model Guest {
@@ -106,4 +113,25 @@ model PartyTrackVote {
 
   @@unique([trackId, guestToken])
   @@index([guestToken])
+}
+
+model InvitationScreen {
+  id               Int      @id @default(autoincrement())
+  birthdayUsername String   @db.VarChar(191)
+  order            Int      @default(0)
+
+  // Fondo de la pantalla: imagen o color liso
+  backgroundType      String   @db.VarChar(20) // 'image' | 'color'
+  backgroundImageUrl  String?  @db.VarChar(512)
+  backgroundColor     String?  @db.VarChar(20)
+
+  // Distribución y contenido de la pantalla
+  layoutType String  @db.VarChar(20) @default("single") // 'single' | 'split'
+  content    Json?
+  fragments  Json?
+
+  birthdayPerson BirthdayPeople @relation(fields: [birthdayUsername], references: [username])
+
+  @@index([birthdayUsername])
+  @@unique([birthdayUsername, order])
 }

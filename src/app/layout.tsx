@@ -32,20 +32,28 @@ export default function RootLayout({
   return (
     <html lang="es" className="h-full">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-slate-950 text-slate-100 antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-slate-950 antialiased text-theme-base`}
       >
         <UIChrome>{children}</UIChrome>
-        <footer className="border-t border-slate-800 bg-slate-950/90 text-xs text-slate-400">
+        <footer className="border-t text-xs global-footer">
           <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-3 px-4 py-4 sm:flex-row">
             <p className="text-center sm:text-left">
-              © {year} · Creado por <span className="font-medium text-slate-200">Angelo Polgrossi</span>
+              © {year} · Creado por{' '}
+              <a
+                href="https://angelopol.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-blue-400 hover:underline"
+              >
+                Angelo Polgrossi
+              </a>
             </p>
             <div className="flex items-center gap-3">
               <a
                 href="https://github.com/angelopol/birthday-invitation"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center rounded-md border border-slate-700/60 bg-slate-900/70 px-2 py-1 text-[11px] font-medium text-slate-200 transition hover:border-slate-500 hover:bg-slate-800"
+                className="inline-flex items-center rounded-md border px-2 py-1 text-[11px] font-medium transition global-footer-link"
               >
                 GitHub
               </a>
@@ -53,7 +61,7 @@ export default function RootLayout({
                 href="https://linkedin.com/in/angelopolgrossi"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center rounded-md border border-slate-700/60 bg-slate-900/70 px-2 py-1 text-[11px] font-medium text-slate-200 transition hover:border-slate-500 hover:bg-slate-800"
+                className="inline-flex items-center rounded-md border px-2 py-1 text-[11px] font-medium transition global-footer-link"
               >
                 LinkedIn
               </a>
