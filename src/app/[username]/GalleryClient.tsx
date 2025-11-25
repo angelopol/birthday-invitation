@@ -202,8 +202,8 @@ export default function GalleryClient({ initialItems, token, className, onItemsA
               className="max-h-[80vh] w-auto rounded-lg shadow-2xl border border-slate-700"
             />
             {lightboxItem.guestName && (
-              <p className="mt-2 text-xs text-slate-300 text-right">
-                Subida por <span className="font-medium text-slate-100">{lightboxItem.guestName}</span>
+              <p className="mt-2 text-xs text-theme-muted text-right">
+                Subida por <span className="font-medium text-theme-base">{lightboxItem.guestName}</span>
               </p>
             )}
           </div>
