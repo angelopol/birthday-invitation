@@ -71,10 +71,10 @@ model PartysGallery {
   createdAt        DateTime @default(now())
 
   birthdayUsername String   @db.VarChar(191)
-  guestToken       String   @db.VarChar(191)
+  guestToken       String?  @db.VarChar(191)
 
   birthdayPerson   BirthdayPeople @relation(fields: [birthdayUsername], references: [username])
-  guest            Guest          @relation(fields: [guestToken], references: [token])
+  guest            Guest?         @relation(fields: [guestToken], references: [token])
 
   @@index([birthdayUsername])
   @@index([guestToken])

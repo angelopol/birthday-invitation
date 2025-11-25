@@ -50,9 +50,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "No se pudo determinar el dueño de la subida" }, { status: 400 });
   }
 
-  const existingCount = await prisma.partysGallery.count({
-    where: { guestToken: uploadOwnerKey },
-  });
+  const existingCount = token
+    ? await prisma.partysGallery.count({ where: { guestToken: token } })
+    : await prisma.partysGallery.count({ where: { birthdayUsername, guestToken: null } });
 
   if (existingCount >= MAX_PER_GUEST) {
     return NextResponse.json({
@@ -100,7 +100,7 @@ export async function POST(req: Request) {
         fileType: mainType,
         s3Key: key,
         birthdayUsername,
-        guestToken: uploadOwnerKey,
+        guestToken: token ? token : null,
       },
     });
 
