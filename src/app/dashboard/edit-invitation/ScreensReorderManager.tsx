@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import type { InvitationScreenData } from "@/components/InvitationRenderer";
 import ScreenBlocksEditor from "./ScreenBlocksEditor";
@@ -15,6 +16,7 @@ type Props = {
 };
 
 export default function ScreensReorderManager({ initialScreens }: Props) {
+  const router = useRouter();
   const [ordered, setOrdered] = useState<InvitationScreenData[]>(
     [...initialScreens].sort((a, b) => a.order - b.order)
   );
@@ -44,6 +46,13 @@ export default function ScreensReorderManager({ initialScreens }: Props) {
         throw new Error(err.error || 'No se pudo guardar el orden');
       }
       toast.success('Secuencia guardada');
+      // Refresh server-rendered parts so forms and server data reflect new order
+      try {
+        router.refresh();
+      } catch (e) {
+        // fallback to reload if router.refresh is not available
+        window.location.reload();
+      }
     } catch (error) {
       console.error(error);
       toast.error(error instanceof Error ? error.message : 'Error inesperado');
