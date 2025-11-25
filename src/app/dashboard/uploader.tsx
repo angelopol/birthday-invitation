@@ -19,30 +19,85 @@ export default function DashboardMediaUploader() {
 
     setIsUploading(true);
     try {
-      const res = await fetch("/api/gallery/upload", {
-        method: "POST",
-        body: formData,
-      });
+      // Prepare file descriptors
+      const fileList: Array<{ fileName: string; contentType: string; file: File }> = [];
+      for (const f of files) {
+        if (f instanceof File) fileList.push({ fileName: f.name, contentType: f.type || 'application/octet-stream', file: f });
+      }
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        toast.error(data.error || "No se pudo subir");
+      if (!fileList.length) {
+        toast.error('No hay archivos válidos');
         return;
       }
 
-      toast.success("Archivo(s) subido(s) correctamente");
-      const uploaded = data.uploaded || [];
-      // Notify any gallery viewers on the page to update
+      // Request presigned URLs
+      const presignRes = await fetch('/api/gallery/presign', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ files: fileList.map(f => ({ fileName: f.fileName, contentType: f.contentType })) }),
+      });
+
+      const presignJson = await presignRes.json();
+      if (!presignRes.ok) {
+        toast.error(presignJson.error || 'No se pudieron obtener URLs de subida');
+        return;
+      }
+
+      const signed: Array<any> = presignJson.signed || [];
+      // Upload each file directly to S3
+      const uploadedInfos: Array<{ key: string; fileName: string; fileType: string }> = [];
+
+      for (let i = 0; i < signed.length; i++) {
+        const s = signed[i];
+        const corresponding = fileList[i];
+        try {
+          const putRes = await fetch(s.url, {
+            method: 'PUT',
+            headers: { 'content-type': s.contentType },
+            body: corresponding.file,
+          });
+
+          if (!putRes.ok) {
+            console.error('S3 PUT failed', await putRes.text());
+            throw new Error('Error subiendo a S3');
+          }
+
+          uploadedInfos.push({ key: s.key, fileName: s.fileName, fileType: s.contentType });
+        } catch (e) {
+          console.error('Upload failed for', s, e);
+          toast.error('Error subiendo archivos a S3');
+        }
+      }
+
+      if (!uploadedInfos.length) {
+        toast.error('No se pudieron subir archivos');
+        return;
+      }
+
+      // Register uploaded files in our database
+      const registerRes = await fetch('/api/gallery/register', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ uploads: uploadedInfos }),
+      });
+
+      const registerJson = await registerRes.json();
+      if (!registerRes.ok) {
+        toast.error(registerJson.error || 'No se pudieron registrar los archivos');
+        return;
+      }
+
+      toast.success('Archivo(s) subido(s) correctamente');
+      const uploaded = registerJson.uploaded || [];
       try {
         window.dispatchEvent(new CustomEvent('gallery:uploaded', { detail: uploaded }));
       } catch (e) {
-        // ignore if dispatching fails (e.g., during SSR)
+        // ignore
       }
       event.currentTarget.reset();
     } catch (error) {
       console.error(error);
-      toast.error("Error al subir archivos");
+      toast.error('Error al subir archivos');
     } finally {
       setIsUploading(false);
     }
