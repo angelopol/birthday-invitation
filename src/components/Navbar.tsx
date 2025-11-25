@@ -76,9 +76,13 @@ export default function Navbar() {
         {!username && (
           <Link
             href="/auth/login"
-            className="inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-xs sm:text-sm font-medium text-white hover:bg-blue-500 transition"
+            className="inline-flex items-center rounded-md px-3 py-1.5 text-xs sm:text-sm font-medium transition"
+            style={{
+              background: 'var(--theme-primary, #38bdf8)',
+              color: 'var(--theme-button-text, #0f172a)',
+            }}
           >
-            Make your invitation
+            Crear invitación
           </Link>
         )}
       </nav>

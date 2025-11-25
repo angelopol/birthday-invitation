@@ -79,18 +79,16 @@ function applyThemeVariables(theme?: ThemeConfig | null) {
     return;
   }
 
-  // If no theme is provided, do not overwrite the CSS root variables so
-  // the app's global defaults (defined in `globals.css`) are preserved.
-  if (!theme) return;
-
+  // When `theme` is null or undefined we should reset to defaults so that
+  // leaving a themed page (e.g. invitation) will restore the global defaults.
   const resolved = {
-    primaryColor: theme.primaryColor ?? DEFAULT_THEME.primaryColor,
-    secondaryColor: theme.secondaryColor ?? DEFAULT_THEME.secondaryColor,
-    tertiaryColor: theme.tertiaryColor ?? DEFAULT_THEME.tertiaryColor,
-    typographyFamily: theme.typographyFamily ?? DEFAULT_THEME.typographyFamily,
+    primaryColor: theme?.primaryColor ?? DEFAULT_THEME.primaryColor,
+    secondaryColor: theme?.secondaryColor ?? DEFAULT_THEME.secondaryColor,
+    tertiaryColor: theme?.tertiaryColor ?? DEFAULT_THEME.tertiaryColor,
+    typographyFamily: theme?.typographyFamily ?? DEFAULT_THEME.typographyFamily,
     typographySize:
-      theme.typographySize && !Number.isNaN(theme.typographySize)
-        ? theme.typographySize
+      theme?.typographySize && !Number.isNaN(theme.typographySize)
+        ? theme!.typographySize
         : DEFAULT_THEME.typographySize,
   };
 
