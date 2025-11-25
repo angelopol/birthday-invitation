@@ -73,6 +73,14 @@ export default function Navbar() {
             Cerrar sesión
           </button>
         )}
+        {!username && (
+          <Link
+            href="/auth/login"
+            className="inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-xs sm:text-sm font-medium text-white hover:bg-blue-500 transition"
+          >
+            Make your invitation
+          </Link>
+        )}
       </nav>
     </header>
   );

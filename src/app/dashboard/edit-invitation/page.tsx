@@ -87,22 +87,40 @@ export default async function EditInvitationPage() {
       redirect('/auth/login');
     }
     const currentUsername = (currentSession.user as any).username as string;
+    // Compute next order and try to create; if a unique constraint error occurs
+    // (concurrent creates), retry a couple of times with the updated max order.
+    const getNextOrder = async () => {
+      const maxOrderRow = await prisma.invitationScreen.findFirst({
+        where: { birthdayUsername: currentUsername },
+        orderBy: { order: 'desc' },
+        select: { order: true },
+      });
+      return (maxOrderRow?.order ?? 0) + 1;
+    };
 
-    const maxOrderRow = await prisma.invitationScreen.findFirst({
-      where: { birthdayUsername: currentUsername },
-      orderBy: { order: 'desc' },
-      select: { order: true },
-    });
-    const nextOrder = (maxOrderRow?.order ?? 0) + 1;
-
-    await prisma.invitationScreen.create({
-      data: {
-        birthdayUsername: currentUsername,
-        order: nextOrder,
-        layoutType: 'single',
-        backgroundType: 'color',
-      },
-    });
+    const maxRetries = 3;
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      const nextOrder = await getNextOrder();
+      try {
+        await prisma.invitationScreen.create({
+          data: {
+            birthdayUsername: currentUsername,
+            order: nextOrder,
+            layoutType: 'single',
+            backgroundType: 'color',
+          },
+        });
+        break;
+      } catch (err: any) {
+        // If unique constraint failure, retry (concurrent create). Otherwise rethrow.
+        if (err?.code === 'P2002') {
+          // small backoff before retrying
+          await new Promise((res) => setTimeout(res, 50 * (attempt + 1)));
+          continue;
+        }
+        throw err;
+      }
+    }
 
     redirect('/dashboard/edit-invitation');
   }
@@ -138,38 +156,28 @@ export default async function EditInvitationPage() {
       redirect('/dashboard/edit-invitation');
     }
 
-    // Shift subsequent screens order +1
-    const toShift = await prisma.invitationScreen.findMany({
-      where: { birthdayUsername: currentUsername, order: { gte: existing.order } },
-      orderBy: { order: 'asc' },
-      select: { id: true, order: true },
-    });
-
-    for (let i = 0; i < toShift.length; i++) {
-      const item = toShift[i];
-      const desired = item.order + 1;
-      if (item.order !== desired) {
-        // eslint-disable-next-line no-await-in-loop
-        await prisma.invitationScreen.updateMany({
-          where: { id: item.id, birthdayUsername: currentUsername },
-          data: { order: desired },
-        });
-      }
-    }
-
-    // Create duplicated screen right after the original
-    await prisma.invitationScreen.create({
-      data: {
-        birthdayUsername: currentUsername,
-        order: existing.order + 1,
-        backgroundType: existing.backgroundType,
-        backgroundImageUrl: existing.backgroundImageUrl,
-        backgroundColor: existing.backgroundColor,
-        layoutType: existing.layoutType ?? 'single',
-        content: existing.content ?? undefined,
-        fragments: existing.fragments ?? undefined,
-      },
-    });
+    // We need to atomically shift orders for items after the existing one
+    // and then create the duplicated screen at existing.order + 1. Use a
+    // transaction with an updateMany that increments orders for rows with
+    // order > existing.order to open a slot, then create the new row.
+    await prisma.$transaction([
+      prisma.invitationScreen.updateMany({
+        where: { birthdayUsername: currentUsername, order: { gt: existing.order } },
+        data: { order: { increment: 1 } },
+      }),
+      prisma.invitationScreen.create({
+        data: {
+          birthdayUsername: currentUsername,
+          order: existing.order + 1,
+          backgroundType: existing.backgroundType,
+          backgroundImageUrl: existing.backgroundImageUrl,
+          backgroundColor: existing.backgroundColor,
+          layoutType: existing.layoutType ?? 'single',
+          content: existing.content ?? undefined,
+          fragments: existing.fragments ?? undefined,
+        },
+      }),
+    ]);
 
     redirect('/dashboard/edit-invitation');
   }
