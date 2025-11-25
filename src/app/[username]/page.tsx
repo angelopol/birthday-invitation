@@ -121,7 +121,7 @@ export default async function InvitationPage({ params, searchParams }: Invitatio
         backgroundColor: tertiaryColor,
       }}
     >
-      <div className="flex-1 flex flex-col items-center justify-start px-4 py-10 gap-8 invitation-theme">
+      <div className="w-full max-w-5xl mx-auto flex-1 flex flex-col items-center justify-start px-4 sm:px-6 lg:px-8 py-10 gap-8 invitation-theme">
         {screens.length > 0 ? (
           <InvitationRendererWrapper
             screens={screens}
