@@ -32,6 +32,13 @@ export default function DashboardMediaUploader() {
       }
 
       toast.success("Archivo(s) subido(s) correctamente");
+      const uploaded = data.uploaded || [];
+      // Notify any gallery viewers on the page to update
+      try {
+        window.dispatchEvent(new CustomEvent('gallery:uploaded', { detail: uploaded }));
+      } catch (e) {
+        // ignore if dispatching fails (e.g., during SSR)
+      }
       event.currentTarget.reset();
     } catch (error) {
       console.error(error);

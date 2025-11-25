@@ -34,6 +34,27 @@ export default function GalleryClient({ initialItems, token, className, onItemsA
     return () => window.clearTimeout(id);
   }, []);
 
+  // Listen for global uploads (from dashboard uploader) and prepend them
+  useEffect(() => {
+    const handler = (ev: Event) => {
+      try {
+        const detail = (ev as CustomEvent).detail as GalleryItem[] | undefined;
+        if (!detail || !detail.length) return;
+        const normalized = detail.map(item => ({ ...item, publicUrl: `/api/gallery/file/${item.id}` }));
+        setItems(prev => {
+          const existingIds = new Set(prev.map(i => i.id));
+          const fresh = normalized.filter(i => !existingIds.has(i.id));
+          return [...fresh, ...prev];
+        });
+      } catch {
+        // ignore malformed events
+      }
+    };
+
+    window.addEventListener('gallery:uploaded', handler as EventListener);
+    return () => window.removeEventListener('gallery:uploaded', handler as EventListener);
+  }, []);
+
   const handleUploaded = (uploaded: GalleryItem[]) => {
     if (!uploaded || !uploaded.length) return;
     const normalized = uploaded.map(item => ({
@@ -202,9 +223,12 @@ export default function GalleryClient({ initialItems, token, className, onItemsA
               className="max-h-[80vh] w-auto rounded-lg shadow-2xl border border-slate-700"
             />
             {lightboxItem.guestName && (
-              <p className="mt-2 text-xs text-theme-muted text-right">
-                Subida por <span className="font-medium text-theme-base">{lightboxItem.guestName}</span>
-              </p>
+              <div className="mt-2 flex justify-end">
+                <span className="inline-flex items-center gap-2 rounded px-2 py-1 text-xs font-medium bg-black/60 text-white">
+                  <span className="text-[11px] opacity-90">Subida por</span>
+                  <span className="font-semibold text-sm">{lightboxItem.guestName}</span>
+                </span>
+              </div>
             )}
           </div>
         </div>
