@@ -7,6 +7,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { prisma } from '@/lib/prisma';
 import { normalizeBackgroundImageUrl } from '@/lib/backgrounds';
+import { getPublicUrl } from '@/lib/s3';
 
 export const metadata = {
   title: 'Invitación de cumpleaños — BirthdayInvitation',
@@ -66,7 +67,7 @@ export default async function InvitationPage({ params, searchParams }: Invitatio
     fileName: item.fileName,
     fileType: item.fileType,
     s3Key: item.s3Key,
-    publicUrl: `/api/gallery/file/${item.id}`,
+    publicUrl: getPublicUrl(item.s3Key),
     guestName: item.guest?.nickname || item.guest?.name || null,
   }));
 

@@ -42,7 +42,7 @@ export default function GalleryClient({ initialItems, token, className, onItemsA
       try {
         const detail = (ev as CustomEvent).detail as GalleryItem[] | undefined;
         if (!detail || !detail.length) return;
-        const normalized = detail.map(item => ({ ...item, publicUrl: `/api/gallery/file/${item.id}` }));
+        const normalized = detail;
         setItems(prev => {
           const existingIds = new Set(prev.map(i => i.id));
           const fresh = normalized.filter(i => !existingIds.has(i.id));
@@ -59,10 +59,7 @@ export default function GalleryClient({ initialItems, token, className, onItemsA
 
   const handleUploaded = (uploaded: GalleryItem[]) => {
     if (!uploaded || !uploaded.length) return;
-    const normalized = uploaded.map(item => ({
-      ...item,
-      publicUrl: `/api/gallery/file/${item.id}`,
-    }));
+    const normalized = uploaded;
 
     setItems(prev => [...normalized, ...prev]);
     onItemsAdded?.(normalized);

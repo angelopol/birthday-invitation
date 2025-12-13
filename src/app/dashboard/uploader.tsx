@@ -90,7 +90,10 @@ export default function DashboardMediaUploader() {
       }
 
       toast.success('Archivo(s) subido(s) correctamente');
-      const uploaded = registerJson.uploaded || [];
+      const uploaded = (registerJson.uploaded || []).map((item: any) => ({
+        ...item,
+        publicUrl: item?.s3Key ? `https://${process.env.NEXT_PUBLIC_AWS_BUCKET}.s3.${process.env.NEXT_PUBLIC_AWS_DEFAULT_REGION}.amazonaws.com/${item.s3Key}` : item.publicUrl,
+      }));
       try {
         window.dispatchEvent(new CustomEvent('gallery:uploaded', { detail: uploaded }));
       } catch (e) {

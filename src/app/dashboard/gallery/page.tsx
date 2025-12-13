@@ -2,8 +2,16 @@ import { redirect } from 'next/navigation';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { prisma } from '@/lib/prisma';
+import { getPublicUrl } from '@/lib/s3';
 import GalleryClient from '@/app/[username]/GalleryClient';
 import DashboardMediaUploader from '../uploader';
+
+type GalleryDbRow = {
+  id: number;
+  fileName: string;
+  fileType: string;
+  s3Key: string;
+};
 
 export const metadata = {
   title: 'Galería de tu fiesta — BirthdayInvitation',
@@ -18,21 +26,21 @@ export default async function DashboardGalleryPage() {
 
   const username = (session.user as any).username as string;
 
-  const galleryRaw = await prisma.partysGallery.findMany({
+  const galleryRaw: GalleryDbRow[] = await prisma.partysGallery.findMany({
     where: { birthdayUsername: username },
     orderBy: { createdAt: 'desc' },
   });
 
-  const gallery = galleryRaw.map(item => ({
+  const gallery = galleryRaw.map((item) => ({
     id: item.id,
     fileName: item.fileName,
     fileType: item.fileType,
     s3Key: item.s3Key,
-    publicUrl: `/api/gallery/file/${item.id}`,
+    publicUrl: getPublicUrl(item.s3Key),
   }));
 
-  const photoCount = gallery.filter(item => item.fileType.startsWith('image/')).length;
-  const videoCount = gallery.filter(item => item.fileType.startsWith('video/')).length;
+  const photoCount = gallery.filter((item) => item.fileType.startsWith('image/')).length;
+  const videoCount = gallery.filter((item) => item.fileType.startsWith('video/')).length;
 
   async function resetGallery(formData: FormData) {
     'use server';
