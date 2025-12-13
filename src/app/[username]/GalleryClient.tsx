@@ -17,13 +17,15 @@ interface GalleryClientProps {
   token?: string;
   className?: string;
   onItemsAdded?: (items: GalleryItem[]) => void;
+  allowDelete?: boolean;
 }
 
-export default function GalleryClient({ initialItems, token, className, onItemsAdded }: GalleryClientProps) {
+export default function GalleryClient({ initialItems, token, className, onItemsAdded, allowDelete }: GalleryClientProps) {
   const [items, setItems] = useState<GalleryItem[]>(initialItems);
   const [loadingIds, setLoadingIds] = useState<Set<number>>(new Set());
   const [canRenderGrid, setCanRenderGrid] = useState(false);
   const [lightboxItem, setLightboxItem] = useState<GalleryItem | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     setItems(initialItems);
@@ -95,8 +97,32 @@ export default function GalleryClient({ initialItems, token, className, onItemsA
     document.body.removeChild(link);
   };
 
-  // Eliminación deshabilitada de momento: la API de borrado sigue existiendo,
-  // pero la acción desde el lightbox se ha retirado para evitar errores.
+  const handleDelete = async (item: GalleryItem) => {
+    if (!allowDelete) return;
+
+    const ok = window.confirm("¿Eliminar esta foto de la galería? Esta acción no se puede deshacer.");
+    if (!ok) return;
+
+    try {
+      setDeleting(true);
+      const res = await fetch(`/api/gallery/${item.id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({} as any));
+        throw new Error(data?.error || 'No se pudo eliminar');
+      }
+
+      setItems(prev => prev.filter(i => i.id !== item.id));
+      setLightboxItem(null);
+    } catch (e: any) {
+      alert(e?.message || 'No se pudo eliminar');
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const containerClass = `space-y-3 ${className ?? "pt-6 border-t border-slate-800"}`;
 
@@ -186,6 +212,23 @@ export default function GalleryClient({ initialItems, token, className, onItemsA
             onClick={e => e.stopPropagation()}
           >
             <div className="absolute top-3 right-3 flex gap-2">
+              {allowDelete && (
+                <button
+                  type="button"
+                  aria-label="Eliminar imagen"
+                  disabled={deleting}
+                  className="rounded-full px-3 py-1 text-[11px] font-medium hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-60"
+                  style={{
+                    background: 'rgba(239, 68, 68, 0.16)',
+                    color: '#fecaca',
+                    border: '1px solid rgba(239, 68, 68, 0.6)',
+                    ['--tw-ring-color' as any]: 'rgba(239, 68, 68, 0.9)',
+                  }}
+                  onClick={() => lightboxItem && handleDelete(lightboxItem)}
+                >
+                  {deleting ? 'Eliminando…' : 'Eliminar'}
+                </button>
+              )}
               <button
                 type="button"
                 aria-label="Descargar imagen"
@@ -224,9 +267,25 @@ export default function GalleryClient({ initialItems, token, className, onItemsA
             />
             {lightboxItem.guestName && (
               <div className="mt-2 flex justify-end">
-                <span className="inline-flex items-center gap-2 rounded px-2 py-1 text-xs font-medium bg-black/60 text-white">
+                <span
+                  className="inline-flex items-center gap-2 rounded px-2 py-1 text-xs font-medium"
+                  style={{
+                    background: 'var(--theme-surface-elevated, rgba(0,0,0,0.65))',
+                    border: '1px solid var(--theme-border, rgba(255,255,255,0.18))',
+                    color: 'var(--theme-text, #ffffff)',
+                    textShadow: '0 1px 2px rgba(0,0,0,0.55)',
+                  }}
+                >
                   <span className="text-[11px] opacity-90">Subida por</span>
-                  <span className="font-semibold text-sm">{lightboxItem.guestName}</span>
+                  <span
+                    className="font-semibold text-sm"
+                    style={{
+                      color: 'var(--theme-primary, #38bdf8)',
+                      textShadow: '0 1px 2px rgba(0,0,0,0.65)',
+                    }}
+                  >
+                    {lightboxItem.guestName}
+                  </span>
                 </span>
               </div>
             )}

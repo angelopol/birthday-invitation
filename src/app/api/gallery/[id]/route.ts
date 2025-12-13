@@ -12,6 +12,11 @@ export async function DELETE(
   const url = new URL(req.url);
   const token = url.searchParams.get("token");
 
+  // Invitados no pueden eliminar archivos: sólo el cumpleañero autenticado desde dashboard.
+  if (token) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
+
   const id = Number(params.id);
   if (!id || Number.isNaN(id)) {
     return NextResponse.json({ error: "ID inválido" }, { status: 400 });
@@ -23,21 +28,15 @@ export async function DELETE(
     return NextResponse.json({ error: "Archivo no encontrado" }, { status: 404 });
   }
 
-  let isAllowed = false;
+  const session = await getServerSession(authOptions);
+  const sessionUsername = (session?.user as any)?.username as string | undefined;
 
-  if (token && entry.guestToken === token) {
-    isAllowed = true;
-  } else {
-    const session = await getServerSession(authOptions);
-    const sessionUsername = (session?.user as any)?.username as string | undefined;
-
-    if (sessionUsername && sessionUsername === entry.birthdayUsername) {
-      isAllowed = true;
-    }
+  if (!sessionUsername) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
-  if (!isAllowed) {
-    return NextResponse.json({ error: "No puedes eliminar este archivo" }, { status: 403 });
+  if (sessionUsername !== entry.birthdayUsername) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 
   await deleteFromS3(entry.s3Key);

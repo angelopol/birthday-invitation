@@ -111,7 +111,7 @@ export default async function DashboardGalleryPage() {
           </div>
 
           <div className="pt-2 border-t border-slate-800">
-            <GalleryClient initialItems={gallery} />
+            <GalleryClient initialItems={gallery} allowDelete />
           </div>
         </div>
       </div>
