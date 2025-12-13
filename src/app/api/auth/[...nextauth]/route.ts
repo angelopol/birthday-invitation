@@ -7,7 +7,6 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: 'jwt',
   },
-  trustHost: true,
   useSecureCookies: process.env.NODE_ENV === 'production',
   cookies: {
     sessionToken: {
