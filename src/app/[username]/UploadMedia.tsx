@@ -28,6 +28,7 @@ export default function UploadMedia({ token, onUploaded }: UploadMediaProps) {
       const presignRes = await fetch(`/api/gallery/presign?token=${encodeURIComponent(token)}`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ files: fileList.map(f => ({ fileName: f.fileName, contentType: f.contentType })) }),
       });
 
@@ -70,6 +71,7 @@ export default function UploadMedia({ token, onUploaded }: UploadMediaProps) {
       const registerRes = await fetch(`/api/gallery/register?token=${encodeURIComponent(token)}`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ uploads: uploadedInfos }),
       });
 

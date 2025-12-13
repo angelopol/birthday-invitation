@@ -34,6 +34,7 @@ export default function DashboardMediaUploader() {
       const presignRes = await fetch('/api/gallery/presign', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ files: fileList.map(f => ({ fileName: f.fileName, contentType: f.contentType })) }),
       });
 
@@ -78,6 +79,7 @@ export default function DashboardMediaUploader() {
       const registerRes = await fetch('/api/gallery/register', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ uploads: uploadedInfos }),
       });
 

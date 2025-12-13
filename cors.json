@@ -1,11 +1,7 @@
 {
-    "CORSRules": [
-        {
-            "AllowedOrigins": ["https://birthday-invitation-app.vercel.app", "http://localhost:3000"],
-            "AllowedMethods": ["GET", "PUT", "POST", "HEAD"],
-            "AllowedHeaders": ["*"],
-            "ExposeHeaders": ["ETag"],
-            "MaxAgeSeconds": 3000
-        }
-    ]
+    "AllowedOrigins": ["https://birthday-invitation-app.vercel.app", "http://localhost:3000"],
+    "AllowedMethods": ["GET", "PUT", "POST", "HEAD"],
+    "AllowedHeaders": ["*"],
+    "ExposeHeaders": ["ETag"],
+    "MaxAgeSeconds": 3000
 }
