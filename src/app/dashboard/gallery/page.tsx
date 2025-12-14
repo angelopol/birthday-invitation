@@ -39,8 +39,15 @@ export default async function DashboardGalleryPage() {
     publicUrl: getPublicUrl(item.s3Key),
   }));
 
-  const photoCount = gallery.filter((item) => item.fileType.startsWith('image/')).length;
-  const videoCount = gallery.filter((item) => item.fileType.startsWith('video/')).length;
+  const getKind = (fileType: string) => {
+    const t = (fileType || '').toLowerCase();
+    if (t === 'video' || t.startsWith('video/')) return 'video';
+    if (t === 'image' || t.startsWith('image/')) return 'image';
+    return 'other';
+  };
+
+  const photoCount = gallery.filter((item) => getKind(item.fileType) === 'image').length;
+  const videoCount = gallery.filter((item) => getKind(item.fileType) === 'video').length;
 
   async function resetGallery(formData: FormData) {
     'use server';
