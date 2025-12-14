@@ -26,6 +26,7 @@ export default function GalleryClient({ initialItems, token, className, onItemsA
   const [canRenderGrid, setCanRenderGrid] = useState(false);
   const [lightboxItem, setLightboxItem] = useState<GalleryItem | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
     setItems(initialItems);
@@ -34,6 +35,12 @@ export default function GalleryClient({ initialItems, token, className, onItemsA
   useEffect(() => {
     const id = window.setTimeout(() => setCanRenderGrid(true), 120);
     return () => window.clearTimeout(id);
+  }, []);
+
+  useEffect(() => {
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+    // iOS Safari and iOS WebViews
+    setIsIOS(/iPad|iPhone|iPod/.test(ua));
   }, []);
 
   // Listen for global uploads (from dashboard uploader) and prepend them
@@ -157,17 +164,30 @@ export default function GalleryClient({ initialItems, token, className, onItemsA
                           <div className="w-6 h-6 border-2 border-slate-500 border-top-slate-100 rounded-full animate-spin" />
                         </div>
                       )}
-                      <video
-                        className="w-full h-auto object-cover"
-                        controls
-                        playsInline
-                        preload="metadata"
-                        controlsList="nodownload"
-                        onLoadStart={() => handleLoadStart(item.id)}
-                        onLoadedData={() => handleLoaded(item.id)}
-                      >
-                        <source src={item.publicUrl} />
-                      </video>
+                      {isIOS ? (
+                        <iframe
+                          title={item.fileName}
+                          className="w-full"
+                          style={{ aspectRatio: '9 / 16', border: 0 }}
+                          // Video.js HTTP stream fallback via native <video> in iframe is isolated from parent CSS quirks.
+                          src={`/api/gallery/player?src=${encodeURIComponent(item.publicUrl)}`}
+                          allow="autoplay; fullscreen; picture-in-picture"
+                          allowFullScreen
+                          onLoad={() => handleLoaded(item.id)}
+                        />
+                      ) : (
+                        <video
+                          className="w-full h-auto object-cover"
+                          controls
+                          playsInline
+                          preload="metadata"
+                          controlsList="nodownload"
+                          onLoadStart={() => handleLoadStart(item.id)}
+                          onLoadedData={() => handleLoaded(item.id)}
+                        >
+                          <source src={item.publicUrl} />
+                        </video>
+                      )}
                     </div>
                   </div>
                 );
