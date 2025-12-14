@@ -6,9 +6,9 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function DELETE(
   req: Request,
-  context: { params: any }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { params } = context;
+  const { id: idParam } = await context.params;
   const url = new URL(req.url);
   const token = url.searchParams.get("token");
 
@@ -17,7 +17,7 @@ export async function DELETE(
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
-  const id = Number(params.id);
+  const id = Number(idParam);
   if (!id || Number.isNaN(id)) {
     return NextResponse.json({ error: "ID inválido" }, { status: 400 });
   }

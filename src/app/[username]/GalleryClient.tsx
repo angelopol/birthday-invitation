@@ -95,10 +95,20 @@ export default function GalleryClient({ initialItems, token, className, onItemsA
   const handleDownload = (item: GalleryItem) => {
     const link = document.createElement("a");
     link.href = item.publicUrl;
-    link.download = item.fileName || "foto-galeria";
+    link.download = item.fileName || (item.fileType === 'video' ? 'video-galeria' : 'foto-galeria');
+    link.rel = 'noopener';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleDownloadWithFallback = (item: GalleryItem) => {
+    try {
+      handleDownload(item);
+    } catch {
+      // iOS Safari a veces ignora `download`; fallback a abrir en nueva pestaña.
+      window.open(item.publicUrl, '_blank', 'noopener,noreferrer');
+    }
   };
 
   const handleDelete = async (item: GalleryItem) => {
