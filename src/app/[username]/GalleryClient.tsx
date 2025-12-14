@@ -94,7 +94,10 @@ export default function GalleryClient({ initialItems, token, className, onItemsA
 
   const handleDownload = (item: GalleryItem) => {
     const link = document.createElement("a");
-    link.href = item.publicUrl;
+    // Prefer a same-origin download URL to force Content-Disposition attachment.
+    // This avoids navigating to the raw S3 URL when the browser ignores `download`.
+    const downloadUrl = `/api/gallery/file/${item.id}?download=1`;
+    link.href = downloadUrl;
     link.download = item.fileName || (item.fileType === 'video' ? 'video-galeria' : 'foto-galeria');
     link.rel = 'noopener';
     document.body.appendChild(link);

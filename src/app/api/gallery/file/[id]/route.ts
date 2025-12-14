@@ -5,9 +5,20 @@ import { GetObjectCommand } from "@aws-sdk/client-s3";
 
 const bucket = process.env.AWS_BUCKET!;
 
-export async function GET(_req: Request, context: { params: Promise<{ id: string }> }) {
+function encodeFileNameRFC5987(fileName: string) {
+  return encodeURIComponent(fileName)
+    .replace(/'/g, "%27")
+    .replace(/\(/g, "%28")
+    .replace(/\)/g, "%29")
+    .replace(/\*/g, "%2A");
+}
+
+export async function GET(req: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
   const numericId = Number(id);
+
+  const url = new URL(req.url);
+  const forceDownload = url.searchParams.get('download') === '1';
 
   if (!numericId || Number.isNaN(numericId)) {
     return NextResponse.json({ error: "ID inválido" }, { status: 400 });
@@ -38,6 +49,12 @@ export async function GET(_req: Request, context: { params: Promise<{ id: string
     // iOS/Safari es sensible al Content-Type real; evita comodines.
     headers.set("Content-Type", entry.fileType === "video" ? "video/mp4" : "image/*");
     headers.set("Accept-Ranges", "bytes");
+    if (forceDownload) {
+      const fallbackName = entry.fileType === 'video' ? 'video-galeria.mp4' : 'foto-galeria';
+      const fileName = entry.fileName || fallbackName;
+      // Use RFC5987 for UTF-8 filenames.
+      headers.set('Content-Disposition', `attachment; filename*=UTF-8''${encodeFileNameRFC5987(fileName)}`);
+    }
     if (data.ContentLength != null) {
       headers.set("Content-Length", String(data.ContentLength));
     }
