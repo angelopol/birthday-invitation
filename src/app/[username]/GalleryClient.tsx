@@ -158,12 +158,16 @@ export default function GalleryClient({ initialItems, token, className, onItemsA
                         </div>
                       )}
                       <video
-                        src={item.publicUrl}
                         className="w-full h-auto object-cover"
                         controls
+                        playsInline
+                        preload="metadata"
+                        controlsList="nodownload"
                         onLoadStart={() => handleLoadStart(item.id)}
                         onLoadedData={() => handleLoaded(item.id)}
-                      />
+                      >
+                        <source src={item.publicUrl} />
+                      </video>
                     </div>
                   </div>
                 );

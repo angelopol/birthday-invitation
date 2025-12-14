@@ -35,7 +35,9 @@ export async function GET(_req: Request, context: { params: Promise<{ id: string
     const body = data.Body as ReadableStream;
 
     const headers = new Headers();
-    headers.set("Content-Type", entry.fileType === "video" ? "video/*" : "image/*");
+    // iOS/Safari es sensible al Content-Type real; evita comodines.
+    headers.set("Content-Type", entry.fileType === "video" ? "video/mp4" : "image/*");
+    headers.set("Accept-Ranges", "bytes");
     if (data.ContentLength != null) {
       headers.set("Content-Length", String(data.ContentLength));
     }
